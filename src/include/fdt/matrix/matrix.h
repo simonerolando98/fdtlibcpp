@@ -172,12 +172,14 @@ namespace fdt {
          */
         constexpr reference at(size_t row, size_t col)
         {
-            if (row >= Rows || col >= Cols) throw matrix_out_of_range();
+            if (row >= Rows || col >= Cols)
+                throw matrix_out_of_range("matrix indices out of range");
             return _data[Cols * row + col];
         }
         constexpr const_reference at(size_t row, size_t col) const
         {
-            if (row >= Rows || col >= Cols) throw matrix_out_of_range();
+            if (row >= Rows || col >= Cols)
+                throw matrix_out_of_range("matrix indices out of range");
             return _data[Cols * row + col];
         }
 
@@ -188,7 +190,9 @@ namespace fdt {
          */
         [[nodiscard]] double determinant() const noexcept
         {
-            if (Rows != Cols) throw matrix_non_square();
+            if (Rows != Cols)
+                throw matrix_non_square("determinant is not defined"
+                                        "for non square matrices.");
 
             // new allocator
             std::allocator<double> local_allocator;
