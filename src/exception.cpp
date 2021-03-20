@@ -18,4 +18,13 @@ namespace fdt {
 
     matrix_non_square::matrix_non_square(const char* message)
                 : std::length_error(message) {}
+
+    matrix_size_mismatch::matrix_size_mismatch()
+        : std::length_error("matrix size mismatch") {}
+
+    matrix_size_mismatch::matrix_size_mismatch(const std::string& message)
+        : std::length_error(message) {}
+
+    matrix_size_mismatch::matrix_size_mismatch(const char* message)
+        : std::length_error(message) {}
 }

@@ -31,6 +31,15 @@ namespace fdt {
 
         explicit matrix_non_square(const char* message);
     };
+
+    class matrix_size_mismatch : public std::length_error {
+    public:
+        matrix_size_mismatch();
+
+        explicit matrix_size_mismatch(const std::string& message);
+
+        explicit matrix_size_mismatch(const char* message);
+    };
 }
 
 #endif //FDTLIBCPP_EXCEPTION_H

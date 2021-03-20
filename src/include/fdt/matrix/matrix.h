@@ -120,8 +120,8 @@ namespace fdt {
         constexpr const_iterator begin() const { return rand_iterator(_data); }
 
         /**
-         *
-         * @return
+         * Returns an iterator to the end of the matrix.
+         * @return fdt::rand_iterator to the end of the matrix.
          */
         [[nodiscard]]
         constexpr iterator end() { return rand_iterator(_data + Rows * Cols); }
@@ -129,8 +129,12 @@ namespace fdt {
         constexpr const_iterator end() const { return rand_iterator(_data + Rows * Cols); }
 
         /**
-         *
-         * @return
+         * Returns the underlying data structure containing matrix
+         * data.
+         * @return pointer to the underlying data structure. Data is
+         * linearized for easier memory access, which needs notational
+         * conversion of indices if access through the underlying data
+         * structure is needed.
          */
         [[nodiscard]]
         constexpr auto data() { return _data; }
@@ -138,10 +142,11 @@ namespace fdt {
         constexpr auto data() const { return _data; }
 
         /**
-         *
-         * @param row
-         * @param col
-         * @return
+         * Returns a reference to the element of the matrix indexed
+         * by row and column.
+         * @param row current row.
+         * @param col current column.
+         * @return value_type reference to the indexed object.
          */
         constexpr reference
         operator()(size_t row, size_t col) noexcept
@@ -156,10 +161,13 @@ namespace fdt {
         }
 
         /**
-         *
-         * @param row
-         * @param col
-         * @return
+         * Returns a reference to the element of the matrix indexed
+         * by row and col. Every access is bounds-checked and may throw
+         * matrix_out_of_range if any of the immediate values pertaining
+         * to row or col is out of bounds.
+         * @param row current row.
+         * @param col current column.
+         * @return value_type reference to the indexed element.
          */
         constexpr reference at(size_t row, size_t col)
         {
@@ -246,11 +254,6 @@ namespace fdt {
             return mat;
         }
 
-        /**
-         *
-         * @param other
-         * @return
-         */
         [[nodiscard]]
         constexpr auto operator+(const matrix& other) const
         {
@@ -260,11 +263,6 @@ namespace fdt {
             return sum;
         }
 
-        /**
-         *
-         * @param other
-         * @return
-         */
         [[nodiscard]]
         constexpr auto operator-(const matrix& other) const
         {
@@ -274,11 +272,6 @@ namespace fdt {
             return diff;
         }
 
-        /**
-         *
-         * @param other
-         * @return
-         */
         constexpr auto operator+=(const matrix& other)
         {
             for (size_t i = 0; i < Rows * Cols; ++i)
@@ -286,16 +279,39 @@ namespace fdt {
             return *this;
         }
 
-        /**
-         *
-         * @param other
-         * @return
-         */
         constexpr auto operator-=(const matrix& other)
         {
             for (size_t i = 0; i < Rows * Cols; ++i)
                 *(_data + i) -= *(other.data() + i);
             return *this;
+        }
+
+        constexpr auto operator*(const matrix<Ty, Cols, Rows>& other)
+        {
+            if (Rows != other.cols() || Cols != other.rows())
+                throw matrix_size_mismatch();
+            matrix<Ty, Cols, Rows> result;
+
+            for (size_t i = 0; i < Cols; ++i) {
+                for (size_t j = 0; j < Cols; ++j) {
+                    result(i, j) = 0;
+                    for (size_t k = 0; k < Cols; ++k)
+                        result(i, j) += _data[Cols * i + k] * other(k, j);
+                }
+            }
+            return result;
+        }
+
+        constexpr bool operator==(const matrix& other) const
+        {
+            for (size_t i = 0; i < Rows * Cols; ++i)
+                if (_data[i] != other.data()[i]) return false;
+            return true;
+        }
+
+        constexpr bool operator!=(const matrix& other) const
+        {
+            return !(this->operator==(other));
         }
     private:
         Ty* _data;
