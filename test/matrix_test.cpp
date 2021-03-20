@@ -165,28 +165,6 @@ TEST(matrix, operator_inplace_minus)
     (void)mat;
 }
 
-TEST(matrix, operator_multiply)
-{
-    fdt::matrix<int, 2, 3> mat {
-        1, 2, 0,
-        1, 1, 6
-    };
-    fdt::matrix<int, 3, 2> mat2 {
-        1, 2,
-        0, 1,
-        1, 6
-    };
-
-    auto mul = mat * mat2;
-    ASSERT_EQ(1, mul(0, 0));
-    ASSERT_EQ(4, mul(0, 1));
-    ASSERT_EQ(7, mul(1, 0));
-    ASSERT_EQ(39, mul(1, 1));
-    (void)mat;
-    (void)mat2;
-    (void)mul;
-}
-
 TEST(matrix, operator_equality)
 {
     fdt::matrix<int, 3, 3> mat {

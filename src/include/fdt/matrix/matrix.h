@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <initializer_list>
 #include <algorithm>
+#include <functional>
 #include "fdt/exception.h"
 #include "fdt/iterator.h"
 
@@ -284,22 +285,6 @@ namespace fdt {
             for (size_t i = 0; i < Rows * Cols; ++i)
                 *(_data + i) -= *(other.data() + i);
             return *this;
-        }
-
-        constexpr auto operator*(const matrix<Ty, Cols, Rows>& other)
-        {
-            if (Rows != other.cols() || Cols != other.rows())
-                throw matrix_size_mismatch();
-            matrix<Ty, Cols, Rows> result;
-
-            for (size_t i = 0; i < Cols; ++i) {
-                for (size_t j = 0; j < Cols; ++j) {
-                    result(i, j) = 0;
-                    for (size_t k = 0; k < Cols; ++k)
-                        result(i, j) += _data[Cols * i + k] * other(k, j);
-                }
-            }
-            return result;
         }
 
         constexpr bool operator==(const matrix& other) const
