@@ -31,7 +31,10 @@ namespace fdt {
 
         explicit matrix_non_square(const char* message);
     };
-
+	
+	/**
+	 * @brief Matrix size mismatch exception.
+	*/
     class matrix_size_mismatch : public std::length_error {
     public:
         matrix_size_mismatch();
@@ -40,6 +43,18 @@ namespace fdt {
 
         explicit matrix_size_mismatch(const char* message);
     };
+
+	/**
+	 * @brief Array out of range exception.
+	*/
+	class array_out_of_range : public std::out_of_range {
+	public:
+		array_out_of_range();
+
+		explicit array_out_of_range(const std::string& message);
+
+		explicit array_out_of_range(const char* message);
+	};
 }
 
 #endif //FDTLIBCPP_EXCEPTION_H
