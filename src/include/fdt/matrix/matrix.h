@@ -6,7 +6,6 @@
 #include <type_traits>
 #include <initializer_list>
 #include <algorithm>
-#include <functional>
 #include "fdt/exception.h"
 #include "fdt/iterator.h"
 
@@ -29,7 +28,8 @@ namespace fdt {
         /**
          * Default constructor. Constructs an empty matrix object.
          */
-        constexpr matrix() { _data = _alloc.allocate(Rows * Cols); }
+        constexpr matrix()
+    		: _data(AllocTraits::allocate(_alloc, Rows * Cols)) {}
 
         /**
          * Initializing constructor. Constructs a new matrix object
@@ -39,7 +39,7 @@ namespace fdt {
          */
         constexpr matrix(const std::initializer_list<Ty> init)
         {
-            _data = _alloc.allocate(Rows * Cols);
+            _data = AllocTraits::allocate(_alloc, Rows * Cols);
             if (init.size() == Rows * Cols) {
                 size_t i = 0;
                 for (auto& x : init) {
@@ -58,7 +58,7 @@ namespace fdt {
          */
         constexpr matrix(const matrix& other)
         {
-            _data = _alloc.allocate(Rows * Cols);
+            _data = AllocTraits::allocate(_alloc, Rows * Cols);
             std::copy(other._data, other._data + (Rows * Cols - 1), _data);
         }
 
@@ -71,7 +71,7 @@ namespace fdt {
         constexpr matrix(matrix&& other) noexcept
             : _data(std::move(other._data)) { other._data = nullptr; }
 
-        ~matrix() { _alloc.deallocate(_data, Rows * Cols); }
+        ~matrix() { AllocTraits::deallocate(_alloc, _data, Rows * Cols); }
 
         /**
          * Fills the matrix with a given value.
@@ -170,13 +170,17 @@ namespace fdt {
          * @param col current column.
          * @return value_type reference to the indexed element.
          */
-        constexpr reference at(size_t row, size_t col)
+        constexpr reference
+    	at(size_t row, size_t col)
         {
             if (row >= Rows || col >= Cols)
                 throw matrix_out_of_range("matrix indices out of range");
             return _data[Cols * row + col];
         }
-        constexpr const_reference at(size_t row, size_t col) const
+
+        [[nodiscard]]
+    	constexpr const_reference
+    	at(size_t row, size_t col) const
         {
             if (row >= Rows || col >= Cols)
                 throw matrix_out_of_range("matrix indices out of range");
@@ -195,11 +199,13 @@ namespace fdt {
                                         "for non square matrices.");
 
             // new allocator
-            std::allocator<double> local_allocator;
+            using local_alloc = std::allocator<double>;
+            local_alloc alloc{};
+            using alloc_traits = std::allocator_traits<local_alloc>;
             const size_t N = Rows;
 
             const double SMALL = 1.0E-30;
-            double* mat = local_allocator.allocate(N * N);
+            double* mat = alloc_traits::allocate(alloc, N * N);
 
             // copying matrix with cast
             std::transform(_data, _data + Rows * Cols, mat,
@@ -240,7 +246,7 @@ namespace fdt {
             }
             det *= mat[N * (N - 1) + (N - 1)];
 
-            local_allocator.deallocate(mat, N * N);
+            alloc_traits::deallocate(alloc, mat, N * N);
             return det;
         }
 
@@ -259,53 +265,76 @@ namespace fdt {
             return mat;
         }
 
-        [[nodiscard]]
-        constexpr auto operator+(const matrix& other) const
+        constexpr matrix& operator=(const matrix& other)
         {
-            matrix<Ty, Rows, Cols> sum;
-            for (size_t i = 0; i < Rows * Cols; ++i)
-                *(sum.data() + i) = *(_data + i) + *(other.data() + i);
-            return sum;
-        }
-
-        [[nodiscard]]
-        constexpr auto operator-(const matrix& other) const
-        {
-            matrix<Ty, Rows, Cols> diff;
-            for (size_t i = 0; i < Rows * Cols; ++i)
-                *(diff.data() + i) = *(_data + i) - *(other.data() + i);
-            return diff;
-        }
-
-        constexpr auto operator+=(const matrix& other)
-        {
-            for (size_t i = 0; i < Rows * Cols; ++i)
-                *(_data + i) += *(other.data() + i);
+            if (this != &other)
+                std::copy(other._data, other._data + Rows * Cols, _data);
             return *this;
         }
 
-        constexpr auto operator-=(const matrix& other)
+		constexpr matrix& operator=(matrix&& other) noexcept
         {
-            for (size_t i = 0; i < Rows * Cols; ++i)
-                *(_data + i) -= *(other.data() + i);
+	        if (this != &other) {
+                _data = std::move(other._data);
+                other._data = nullptr;
+	        }
             return *this;
-        }
-
-        constexpr bool operator==(const matrix& other) const
-        {
-            for (size_t i = 0; i < Rows * Cols; ++i)
-                if (_data[i] != other.data()[i]) return false;
-            return true;
-        }
-
-        constexpr bool operator!=(const matrix& other) const
-        {
-            return !(this->operator==(other));
         }
     private:
-        Ty* _data;
         Allocator _alloc;
+        using AllocTraits = std::allocator_traits<Allocator>;
+        Ty* _data;
     };
+
+	template<typename Ty, std::size_t Rows, std::size_t Cols>
+	constexpr bool operator==(
+        const matrix<Ty, Rows, Cols>& l,
+		const matrix<Ty, Rows, Cols>& r)
+	{
+        for (size_t i = 0; i < Rows * Cols; ++i)
+            if (*(l.data() + i) != *(r.data() + i)) return false;
+        return true;
+	}
+
+	template<typename Ty, std::size_t Rows, std::size_t Cols>
+    constexpr auto operator+(
+        const matrix<Ty, Rows, Cols>& l, 
+        const matrix<Ty, Rows, Cols>& r)
+	{
+        matrix<Ty, Rows, Cols> sum;
+        for (size_t i = 0; i < Rows * Cols; ++i)
+            *(sum.data() + i) = *(l.data() + i) + *(r.data() + i);
+        return sum;
+	}
+
+	template<typename Ty, std::size_t Rows, std::size_t Cols>
+    constexpr auto operator-(
+        const matrix<Ty, Rows, Cols>& l,
+        const matrix<Ty, Rows, Cols>& r)
+	{
+        matrix<Ty, Rows, Cols> sub;
+        for (size_t i = 0; i < Rows * Cols; ++i)
+            *(sub.data() + i) = *(l.data() + i) = *(r.data() + i);
+        return sub;
+	}
+
+	template<typename Ty, std::size_t Rows, std::size_t Cols>
+    constexpr matrix<Ty, Rows, Cols>& operator+=(
+        matrix<Ty, Rows, Cols>& l, const matrix<Ty, Rows, Cols>& r)
+	{
+        for (size_t i = 0; i < Rows * Cols; ++i)
+            *(l.data() + i) += *(r.data() + i);
+        return l;
+	}
+
+    template<typename Ty, std::size_t Rows, std::size_t Cols>
+    constexpr matrix<Ty, Rows, Cols>& operator-=(
+        matrix<Ty, Rows, Cols>& l, const matrix<Ty, Rows, Cols>& r)
+    {
+        for (size_t i = 0; i < Rows * Cols; ++i)
+            *(l.data() + i) -= *(r.data() + i);
+        return l;
+    }
 }
 
 #endif

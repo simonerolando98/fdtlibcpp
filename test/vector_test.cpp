@@ -21,7 +21,7 @@ TEST(vector, construct_with_size)
 TEST(vector, construct_with_ilist)
 {
     const auto defalloc = 8;
-    fdt::vector<int> x { 1, 2, 3, 4, 5 };
+    fdt::vector<int> x{ 1, 2, 3, 4, 5 };
     ASSERT_EQ(5, x.size());
     ASSERT_EQ(5 + defalloc, x.capacity());
     ASSERT_EQ(1, x[0]);
@@ -40,7 +40,7 @@ TEST(vector, empty)
 TEST(vector, size)
 {
     const auto defalloc = 8;
-    fdt::vector<int> x { 1, 2, 3, 4 };
+    fdt::vector<int> x{ 1, 2, 3, 4 };
     ASSERT_EQ(4, x.size());
     ASSERT_EQ(4 + defalloc, x.capacity());
     (void)x;
@@ -56,7 +56,7 @@ TEST(vector, capacity)
 
 TEST(vector, front_back)
 {
-    const fdt::vector<int> x { 1, 2, 3, 4 };
+    const fdt::vector<int> x{ 1, 2, 3, 4 };
     ASSERT_EQ(1, x.front());
     ASSERT_EQ(4, x.back());
     (void)x;
@@ -64,7 +64,7 @@ TEST(vector, front_back)
 
 TEST(vector, data)
 {
-    const fdt::vector<int> x { 1, 2, 3, 4 };
+    const fdt::vector<int> x{ 1, 2, 3, 4 };
     ASSERT_NE(nullptr, x.data());
     const auto x_data = x.data();
     ASSERT_EQ(x[0], x_data[0]);
@@ -73,7 +73,7 @@ TEST(vector, data)
 
 TEST(vector, at)
 {
-    const fdt::vector<int> x { 1, 2, 3, 4, 5, 6 };
+    const fdt::vector<int> x{ 1, 2, 3, 4, 5, 6 };
     ASSERT_THROW(auto y = x.at(6), fdt::array_out_of_range);
     ASSERT_NO_THROW(auto y = x.at(2));
     auto y = x.at(2);
@@ -83,7 +83,7 @@ TEST(vector, at)
 
 TEST(vector, begin_end)
 {
-    fdt::vector<int> x { 1, 2, 3, 4, 5 };
+    fdt::vector<int> x{ 1, 2, 3, 4, 5 };
     auto begin = x.begin();
     auto end = x.end();
     ASSERT_NE(begin, end);
@@ -97,7 +97,7 @@ TEST(vector, begin_end)
 
 TEST(vector, iter_traversal)
 {
-    fdt::vector<int> x { 1, 1, 1, 1, 1 };
+    fdt::vector<int> x{ 1, 1, 1, 1, 1 };
     for (const auto& y : x) ASSERT_EQ(1, y);
     (void)x;
 }

@@ -1,5 +1,5 @@
-#ifndef FDT_RAND_STRUCT_DARRAY_H
-#define FDT_RAND_STRUCT_DARRAY_H
+#ifndef FDT_RAND_STRUCT_VECTOR_H
+#define FDT_RAND_STRUCT_VECTOR_H
 
 #include <memory>
 #include <initializer_list>
@@ -22,30 +22,25 @@ namespace fdt {
 		using difference_type = std::ptrdiff_t;
 
 		constexpr vector()
-		{ 
-			_data = _allocator.allocate(_real_alloc, _def_alloc);
-			_size = 0;
-			_capacity = _def_alloc;
-		}
+			: _data(AllocTraits::allocate(_alloc, _def_alloc)), _size(0),
+			_capacity(_def_alloc)
+		{}
 
 		constexpr explicit vector(std::size_t n)
-		{
-			_data = _allocator.allocate(_real_alloc, n + _def_alloc);
-			_size = n;
-			_capacity = _def_alloc + n;
-		}
+			: _data(AllocTraits::allocate(_alloc, _def_alloc + n)), _size(n),
+			_capacity(_def_alloc + n)
+		{}
 
-		constexpr explicit vector(const std::initializer_list<Ty>& list)
+		constexpr explicit vector(const std::initializer_list<Ty>& ilist)
+			: _data(AllocTraits::allocate(_alloc, _def_alloc + ilist.size())),
+			_size(ilist.size()), _capacity(_def_alloc + ilist.size())
 		{
-			_data = _allocator.allocate(_real_alloc, _def_alloc + list.size());
-			_size = list.size();
-			_capacity = list.size() + _def_alloc;
-			std::copy(std::begin(list), std::end(list), _data);
+			std::copy(std::begin(ilist), std::end(ilist), _data);
 		}
 
 		~vector()
 		{
-			_allocator.deallocate(_real_alloc, _data, _capacity);
+			AllocTraits::deallocate(_alloc, _data, _capacity);
 		}
 
 		constexpr bool empty() const { return _size == 0 || _capacity == 0; }
@@ -100,14 +95,14 @@ namespace fdt {
 		constexpr void reserve(size_t n)
 		{
 			if (n <= _capacity) return;
-			auto a = _data;
-			a = _allocator.allocate(_real_alloc, n);
+			auto* a = _data;
+			a = AllocTraits::allocate(_alloc, n);
 
 			// copying vector elements into new buffer
 			std::copy(_data, _data + _size, a);
 
-			// deallocating old buffer
-			_allocator.deallocate(_real_alloc, _data, _capacity);
+			// de-allocating old buffer
+			AllocTraits::deallocate(_alloc, _data, _capacity);
 			_capacity = n;
 			_data = a;
 		}
@@ -140,14 +135,18 @@ namespace fdt {
         {
 		    if (_size + 1 < _capacity) {
 		        _size++;
-				new (_data + _size - 1) value_type(std::forward<Args>(args)...);
+				//new (_data + _size - 1) value_type(std::forward<Args>(args)...);
 				//_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
+				AllocTraits::construct(_alloc, _data + _size - 1, 
+					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
 		    } else {
 		        reserve(_capacity * 2);
 		        _size++;
-				new (_data + _size - 1) value_type(std::forward<Args>(args)...);
+				//new (_data + _size - 1) value_type(std::forward<Args>(args)...);
 		        //_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
+				AllocTraits::construct(_alloc, _data + _size - 1,
+					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
 		    }
         }
@@ -168,8 +167,8 @@ namespace fdt {
 		Ty* _data;
 		size_type _size;
 		size_type _capacity;
-		std::allocator_traits<Allocator> _allocator;
-		Allocator _real_alloc;
+		Allocator _alloc;
+		using AllocTraits = std::allocator_traits<Allocator>;
 	};
 }
 
