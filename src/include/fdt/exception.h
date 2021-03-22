@@ -55,6 +55,18 @@ namespace fdt {
 
 		explicit array_out_of_range(const char* message);
 	};
+
+    /**
+     * @brief Vector size mismatch exception
+    */
+    class vector_size_mismatch : public std::length_error {
+    public:
+        vector_size_mismatch();
+
+        explicit vector_size_mismatch(const std::string& message);
+
+        explicit vector_size_mismatch(const char* message);
+    };
 }
 
 #endif //FDTLIBCPP_EXCEPTION_H

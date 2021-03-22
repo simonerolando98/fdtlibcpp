@@ -314,7 +314,7 @@ namespace fdt {
 	{
         matrix<Ty, Rows, Cols> sub;
         for (size_t i = 0; i < Rows * Cols; ++i)
-            *(sub.data() + i) = *(l.data() + i) = *(r.data() + i);
+            *(sub.data() + i) = *(l.data() + i) - *(r.data() + i);
         return sub;
 	}
 

@@ -36,4 +36,13 @@ namespace fdt {
 
     array_out_of_range::array_out_of_range(const char* message)
 	    	: std::out_of_range(message) {}
+    
+    vector_size_mismatch::vector_size_mismatch()
+        : std::length_error("vector size mismatch") {}
+
+    vector_size_mismatch::vector_size_mismatch(const std::string& message)
+        : std::length_error(message) {}
+
+    vector_size_mismatch::vector_size_mismatch(const char* message)
+        : std::length_error(message) {}
 }

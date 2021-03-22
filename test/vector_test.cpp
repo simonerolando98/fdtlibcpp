@@ -121,3 +121,75 @@ TEST(vector, emplace_back)
     ASSERT_EQ("World", strs[1]);
     (void)strs;
 }
+
+TEST(vector, resize)
+{
+    fdt::vector<std::string> strs({
+        "Barbara",
+        "Maurizio",
+        "Andrea",
+        "Simone"
+    });
+    const auto init_capacity = strs.capacity();
+    strs.emplace_back("Elisabetta");
+    ASSERT_EQ(5, strs.size());
+    strs.resize(2);
+    ASSERT_EQ(2, strs.size());
+    ASSERT_EQ(init_capacity, strs.capacity());
+    (void)strs;
+}
+
+TEST(vector, operator_equality)
+{
+    fdt::vector<std::string> strs {
+        "Hello",
+        "World"
+    };
+    auto strs1 = strs;
+    ASSERT_EQ(strs, strs1);
+    (void)strs;
+    (void)strs1;
+}
+
+TEST(vector, operator_nequality)
+{
+    fdt::vector<std::string> strs {
+        "Hello",
+        "World"
+    };
+    auto strs1 = strs;
+    strs1.push_back("World2");
+    ASSERT_NE(strs, strs1);
+    (void)strs;
+    (void)strs1;
+}
+
+TEST(vector, operator_add)
+{
+    fdt::vector<int> v { 1, 2, 3 };
+    fdt::vector<int> u { 2, 3, 4 };
+    auto sum = v + u;
+    ASSERT_EQ(3, sum[0]);
+    ASSERT_EQ(5, sum[1]);
+    ASSERT_EQ(7, sum[2]);
+    u.push_back(2);
+    ASSERT_THROW(sum = u + v, fdt::vector_size_mismatch);
+    (void)sum;
+    (void)u;
+    (void)v;
+}
+
+TEST(vector, operator_sub)
+{
+    fdt::vector<int> v { 1, 2, 3 };
+    fdt::vector<int> u { 2, 3, 4 };
+    auto sub = v - u;
+    ASSERT_EQ(-1, sub[0]);
+    ASSERT_EQ(-1, sub[1]);
+    ASSERT_EQ(-1, sub[2]);
+    u.push_back(2);
+    ASSERT_THROW(sub = u - v, fdt::vector_size_mismatch);
+    (void)sub;
+    (void)u;
+    (void)v;
+}

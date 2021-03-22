@@ -18,6 +18,8 @@ namespace fdt {
 		using const_pointer = const Ty*;
 		using iterator = rand_iterator<Ty>;
 		using const_iterator = const rand_iterator<Ty>;
+		using reverse_iterator = rand_iterator<Ty>;
+		using const_reverse_iterator = const rand_iterator<Ty>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 
@@ -31,11 +33,54 @@ namespace fdt {
 			_capacity(_def_alloc + n)
 		{}
 
-		constexpr explicit vector(const std::initializer_list<Ty>& ilist)
+		constexpr vector(const vector& other)
+			: _data(AllocTraits::allocate(_alloc, other._capacity)),
+			_size(other._size),
+			_capacity(other._capacity)
+		{
+			for (size_t i = 0; i < other.size(); ++i)
+				AllocTraits::construct(_alloc, _data + i, other[i]);
+		}
+
+		constexpr vector(vector&& other)
+			: _data(std::move(other._data)),
+			_size(other._size), _capacity(other._capacity)
+		{
+			other._data = nullptr;
+			other._size = 0;
+			other._capacity = 0;
+		}
+
+		constexpr vector(const std::initializer_list<Ty>& ilist)
 			: _data(AllocTraits::allocate(_alloc, _def_alloc + ilist.size())),
 			_size(ilist.size()), _capacity(_def_alloc + ilist.size())
 		{
-			std::copy(std::begin(ilist), std::end(ilist), _data);
+
+			for (size_t i = 0; i < ilist.size(); ++i)
+				AllocTraits::construct(_alloc, _data + i,
+					*(ilist.begin() + i));
+		}
+
+		constexpr auto operator=(const vector& other)
+		{
+			if (_capacity < other._capacity) {
+				AllocTraits::deallocate(_alloc, _data, _capacity);
+				_data = AllocTraits(_alloc, other._capacity);
+				_capacity = other._capacity;
+			}
+			_size = other._size;
+			for (size_t i = 0; i < _size; ++i)
+				AllocTraits::construct(_alloc, _data + i, other[i]);
+		}
+
+		constexpr auto operator=(vector&& other)
+		{
+			_data = std::move(other._data);
+			other._data = nullptr;
+			_capacity = other._capacity;
+			_size = other._capacity;
+			other._capacity = 0;
+			other._size = 0;
 		}
 
 		~vector()
@@ -85,12 +130,28 @@ namespace fdt {
 		}
 
 		constexpr iterator begin() { return iterator(_data); }
-		constexpr const_iterator begin() const { return iterator(_data); }
-		constexpr const_iterator cbegin() const { return iterator(_data); }
+		constexpr const_iterator begin() const noexcept
+		{ return iterator(_data); }
+		constexpr const_iterator cbegin() const noexcept
+		{ return iterator(_data); }
 
 		constexpr iterator end() { return iterator(_data + _size); }
-		constexpr const_iterator end() const { return iterator(_data + _size); }
-		constexpr const_iterator cend() const { return iterator(_data + _size); }
+		constexpr const_iterator end() const noexcept
+		{ return iterator(_data + _size); }
+		constexpr const_iterator cend() const noexcept
+		{ return iterator(_data + _size); }
+
+		constexpr reverse_iterator rbegin() { return iterator(_data + _size); }
+		constexpr const_reverse_iterator rbegin() const noexcept
+		{ return reverse_iterator(_data + _size); }
+		constexpr const_reverse_iterator crbegin() const noexcept
+		{ return reverse_iterator(_data + _size); }
+
+		constexpr reverse_iterator rend() { return reverse_iterator(_data); }
+		constexpr const_reverse_iterator rend() const noexcept
+		{ return reverse_iterator(_data); }
+		constexpr const_reverse_iterator crend() const noexcept
+		{ return reverse_iterator(_data); }
 
 		constexpr void reserve(size_t n)
 		{
@@ -118,15 +179,28 @@ namespace fdt {
 		    _size = n;
         }
 
+		constexpr void shrink_to_fit()
+		{
+			if (_size == _capacity) return;
+			auto* a = _data;
+
+			a = AllocTraits::allocate(_alloc, _size);
+			std::copy(_data, _data + _size, a);
+
+			AllocTraits::deallocate(_alloc, _data, _capacity);
+			_capacity = _size;
+			_data = a;
+		}
+
         constexpr void push_back(const Ty& value)
         {
 		    if (_size + 1 < _capacity) {
 		        _size++;
-		        _data[_size - 1] = value;
+		        AllocTraits::construct(_alloc, _data + _size - 1, value);
 		    } else {
 		        reserve(_capacity * 2);
 		        _size++;
-		        _data[_size - 1] = value;
+		        AllocTraits::construct(_alloc, _data + _size - 1, value);
 		    }
         }
 
@@ -135,16 +209,12 @@ namespace fdt {
         {
 		    if (_size + 1 < _capacity) {
 		        _size++;
-				//new (_data + _size - 1) value_type(std::forward<Args>(args)...);
-				//_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
 				AllocTraits::construct(_alloc, _data + _size - 1, 
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
 		    } else {
 		        reserve(_capacity * 2);
 		        _size++;
-				//new (_data + _size - 1) value_type(std::forward<Args>(args)...);
-		        //_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
 				AllocTraits::construct(_alloc, _data + _size - 1,
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
@@ -164,12 +234,42 @@ namespace fdt {
 
 	private:
 		const size_type _def_alloc = 8;
-		Ty* _data;
+		Ty* _data = nullptr;
 		size_type _size;
 		size_type _capacity;
 		Allocator _alloc;
 		using AllocTraits = std::allocator_traits<Allocator>;
 	};
+
+	template <typename Ty>
+	constexpr bool operator==(const vector<Ty>& l, const vector<Ty>& r)
+	{
+		if (l.data() == nullptr || r.data() == nullptr) return false;
+		if (l.size() != r.size()) return false;
+		for (size_t i = 0; i < l.size(); ++i)
+			if (l[i] != r[i]) return false;
+		return true;
+	}
+
+	template <typename Ty>
+	constexpr auto operator+(const vector<Ty>& l, const vector<Ty>& r)
+	{
+		if (l.size() != r.size()) throw vector_size_mismatch();
+		vector<Ty> sum;
+		for (size_t i = 0; i < l.size(); ++i)
+			sum.emplace_back(l[i] + r[i]);
+		return sum;
+	}
+
+	template <typename Ty>
+	constexpr auto operator-(const vector<Ty>& l, const vector<Ty>& r)
+	{
+		if (l.size() != r.size()) throw vector_size_mismatch();
+		vector<Ty> sum;
+		for (size_t i = 0; i < l.size(); ++i)
+			sum.emplace_back(l[i] - r[i]);
+		return sum;
+	}
 }
 
 #endif
