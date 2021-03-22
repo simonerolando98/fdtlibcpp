@@ -3,12 +3,13 @@
 
 #include <memory>
 #include <initializer_list>
+#include <utility>
 #include "fdt/iterator.h"
 #include "fdt/exception.h"
 
 namespace fdt {
-	template <typename Ty, Allocator = std::allocator<Ty> >
-	class darray {
+	template <typename Ty, class Allocator = std::allocator<Ty> >
+	class vector {
 	public:
 		using value_type = Ty;
 		using reference = Ty&;
@@ -20,30 +21,31 @@ namespace fdt {
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 
-		constexpr darray()
+		constexpr vector()
 		{ 
-			_data = _allocator.allocate(_def_alloc);
+			_data = _allocator.allocate(_real_alloc, _def_alloc);
 			_size = 0;
 			_capacity = _def_alloc;
 		}
 
-		constexpr explicit darray(std::size_t n)
+		constexpr explicit vector(std::size_t n)
 		{
-			_data = _allocator.allocate(n + _def_alloc);
-			_size = 0;
+			_data = _allocator.allocate(_real_alloc, n + _def_alloc);
+			_size = n;
 			_capacity = _def_alloc + n;
 		}
 
-		constexpr explicit darray(const std::initializer_list<Ty>& list)
+		constexpr explicit vector(const std::initializer_list<Ty>& list)
 		{
-			_data = _allocator.allocate(_def_alloc + list.size());
+			_data = _allocator.allocate(_real_alloc, _def_alloc + list.size());
 			_size = list.size();
 			_capacity = list.size() + _def_alloc;
+			std::copy(std::begin(list), std::end(list), _data);
 		}
 
-		~darray()
+		~vector()
 		{
-			_allocator.deallocate(_data, _capacity);
+			_allocator.deallocate(_real_alloc, _data, _capacity);
 		}
 
 		constexpr bool empty() const { return _size == 0 || _capacity == 0; }
@@ -60,7 +62,7 @@ namespace fdt {
 		[[nodiscard]]
 		constexpr reference back() { return *(_data + _size - 1); }
 		[[nodiscard]]
-		constexpr const_reference back() { return *(_data + _size - 1); }
+		constexpr const_reference back() const { return *(_data + _size - 1); }
 		
 		[[nodiscard]]
 		constexpr pointer data() { return _data; }
@@ -95,28 +97,79 @@ namespace fdt {
 		constexpr const_iterator end() const { return iterator(_data + _size); }
 		constexpr const_iterator cend() const { return iterator(_data + _size); }
 
-		constexpr void reserve(size_t i)
+		constexpr void reserve(size_t n)
 		{
-			if (i <= _capacity) return;
+			if (n <= _capacity) return;
 			auto a = _data;
-			a = _allocator.allocate(i);
+			a = _allocator.allocate(_real_alloc, n);
 
 			// copying vector elements into new buffer
 			std::copy(_data, _data + _size, a);
 
 			// deallocating old buffer
-			_allocator.deallocate(_data, _capacity);
-			_capacity = i;
+			_allocator.deallocate(_real_alloc, _data, _capacity);
+			_capacity = n;
 			_data = a;
 		}
 
+		constexpr void resize(size_t n)
+        {
+		    if (n <= _size) {
+		        _size = n;
+		        return;
+		    }
+
+		    reserve(n * 2);
+		    _size = n;
+        }
+
+        constexpr void push_back(const Ty& value)
+        {
+		    if (_size + 1 < _capacity) {
+		        _size++;
+		        _data[_size - 1] = value;
+		    } else {
+		        reserve(_capacity * 2);
+		        _size++;
+		        _data[_size - 1] = value;
+		    }
+        }
+
+        template <typename... Args>
+        constexpr reference emplace_back(Args&&... args)
+        {
+		    if (_size + 1 < _capacity) {
+		        _size++;
+				new (_data + _size - 1) value_type(std::forward<Args>(args)...);
+				//_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
+				return *(_data + _size - 1);
+		    } else {
+		        reserve(_capacity * 2);
+		        _size++;
+				new (_data + _size - 1) value_type(std::forward<Args>(args)...);
+		        //_allocator.construct(_real_alloc, _data + _size - 1, std::forward<Args>(args)...);
+				return *(_data + _size - 1);
+		    }
+        }
+
+        constexpr void pop_back()
+        {
+		    _size--;
+        }
+
+        constexpr void swap(vector& other) noexcept
+        {
+            for (size_t i = 0; i < _size; ++i)
+                std::swap(*(_data + i), *(other._data + i));
+        }
 
 	private:
 		const size_type _def_alloc = 8;
-		Allocator _allocator;
 		Ty* _data;
 		size_type _size;
 		size_type _capacity;
+		std::allocator_traits<Allocator> _allocator;
+		Allocator _real_alloc;
 	};
 }
 

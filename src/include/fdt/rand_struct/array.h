@@ -106,7 +106,7 @@ namespace fdt {
 			std::fill_n(_data, Size, value);
 		}
 
-		constexpr void swap(const array& other)
+		constexpr void swap(array& other)
 		{
 			for (size_t i = 0; i < Size; ++i) std::swap(_data + i, other._data + i);
 		}
