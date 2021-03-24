@@ -10,6 +10,15 @@
 #include "fdt/iterator.h"
 
 namespace fdt {
+    /**
+     * @brief Implementation of a template matrix class.
+     * An allocator could be provided as defaulted template
+     * parameter.
+     * @tparam Ty type of the contaner.
+     * @tparam Rows Number of rows.
+     * @tparam Cols Number of columns.
+     * @tparam Allocator allocator.
+     */
     template <typename Ty,
             std::size_t Rows, std::size_t Cols,
             class Allocator = std::allocator<Ty>>
@@ -86,6 +95,7 @@ namespace fdt {
          * Returns the size of the matrix.
          * @return pair containing the size of the matrix.
          */
+        [[nodiscard]]
         constexpr auto size() const
         {
             return std::make_pair<size_t, size_t>(Rows, Cols);
@@ -95,12 +105,14 @@ namespace fdt {
          * Returns the number of rows.
          * @return size_t containing the number of rows.
          */
+        [[nodiscard]]
         constexpr auto rows() const { return Rows; }
 
         /**
          * Returns the number of columns.
          * @return size_t containing the number of columns.
          */
+        [[nodiscard]]
         constexpr auto cols() const { return Cols; }
 
         /**
@@ -149,12 +161,14 @@ namespace fdt {
          * @param col current column.
          * @return value_type reference to the indexed object.
          */
+        [[nodiscard]]
         constexpr reference
         operator()(size_t row, size_t col) noexcept
         {
             return _data[Cols * row + col];
         }
 
+        [[nodiscard]]
         constexpr const_reference
         operator()(size_t row, size_t col) const noexcept
         {
@@ -170,6 +184,7 @@ namespace fdt {
          * @param col current column.
          * @return value_type reference to the indexed element.
          */
+        [[nodiscard]]
         constexpr reference
     	at(size_t row, size_t col)
         {
@@ -265,6 +280,7 @@ namespace fdt {
             return mat;
         }
 
+        
         constexpr matrix& operator=(const matrix& other)
         {
             if (this != &other)

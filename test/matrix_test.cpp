@@ -69,7 +69,7 @@ TEST(matrix, at)
     mat.fill(3);
     ASSERT_EQ(3, mat.at(0, 1));
     ASSERT_EQ(3, mat.at(1, 0));
-    ASSERT_THROW(mat.at(2, 0), fdt::matrix_out_of_range);
+    ASSERT_THROW(auto a = mat.at(2, 0), fdt::matrix_out_of_range);
     ASSERT_NO_THROW(auto a = mat.at(0, 1));
     (void)mat;
 }

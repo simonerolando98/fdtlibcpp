@@ -193,3 +193,17 @@ TEST(vector, operator_sub)
     (void)u;
     (void)v;
 }
+
+TEST(vector, reverse_iterator_traversal)
+{
+    fdt::vector<int> v { 1, 2, 3, 4 };
+    fdt::vector<int> u { 4, 3, 2, 1 };
+
+    size_t i = 0;
+    for (auto it = v.rbegin(); it != v.rend(); ++it) {
+        ASSERT_EQ(*it, u[i]);
+        ++i;
+    }
+    (void)v;
+    (void)u;
+}

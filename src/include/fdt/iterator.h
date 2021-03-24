@@ -127,6 +127,61 @@ namespace fdt {
         TyNode* _node;
     };
 
+    template <typename Ty>
+    class reverse_rand_iterator {
+    public:
+        constexpr reverse_rand_iterator() : _iter(nullptr) {}
+        constexpr explicit reverse_rand_iterator(Ty* ptr) : _iter(ptr) {}
+
+        constexpr void operator++() { _iter--; }
+        constexpr void operator--() { _iter++; }
+        constexpr void operator++(int) { _iter--; }
+        constexpr void operator--(int) { _iter++; }
+
+        [[nodiscard]]
+        constexpr bool operator==(const reverse_rand_iterator& other) const
+        { return _iter == other._iter; }
+        [[nodiscard]]
+        constexpr bool operator!=(const reverse_rand_iterator& other) const
+        { return _iter != other._iter; }
+
+        [[nodiscard]]
+        constexpr bool operator>(const reverse_rand_iterator& other) const
+        { return ((_iter - other._iter) > 0); }
+        [[nodiscard]]
+        constexpr bool operator<(const reverse_rand_iterator& other) const
+        { return ((_iter - other._iter) < 0); }
+        [[nodiscard]]
+        constexpr bool operator>=(const reverse_rand_iterator& other) const
+        { return ((_iter - other._iter) >= 0); }
+        [[nodiscard]]
+        constexpr bool operator<=(const reverse_rand_iterator& other) const
+        { return ((_iter - other._iter) <= 0); }
+
+        [[nodiscard]]
+        constexpr auto operator*() { return *_iter; }
+        [[nodiscard]]
+        constexpr auto operator*() const { return *_iter; }
+
+        auto operator+(int p)
+        {
+            auto iter = _iter;
+            for (int i = 0; i < p; ++i) {
+                if (iter) --iter;
+                else break;
+            }
+            return iter;
+        }
+
+        constexpr explicit operator Ty*() const { return _iter; }
+		constexpr bool operator==(const std::nullptr_t null) const
+		{
+			return _iter == null;
+		}
+    private:
+        Ty* _iter;
+    };
+
     template <typename TyNode>
     class list_iterator {
     public:
