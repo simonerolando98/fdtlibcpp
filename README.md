@@ -5,7 +5,7 @@ All ADTs will be provided as simple C++ include files, in order to facilitate th
 and integration within ongoing projects.
 
 ## 1. Requirements
-Any **C++20** compliant compilers shold work. It is recommended to use CMake if you need
+Any **C++17** compliant compilers shold work. It is recommended to use CMake if you need
 to test the ADTs before usage. If you need to run tests, feel free to clone the repository
 using the command ```git clone --recurse https://github.com/simonerolando98/fdtlibcpp.git```
 in order to clone te Goole Test library included as submodule of the repository.<br><br>
