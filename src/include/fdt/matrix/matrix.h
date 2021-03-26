@@ -33,6 +33,8 @@ namespace fdt {
         using const_pointer = const Ty*;
         using iterator = fdt::rand_iterator<Ty>;
         using const_iterator = const fdt::rand_iterator<Ty>;
+        using reverse_iterator = reverse_rand_iterator<Ty>;
+        using const_reverse_iterator = const reverse_rand_iterator<Ty>;
 
         /**
          * Default constructor. Constructs an empty matrix object.
@@ -95,8 +97,7 @@ namespace fdt {
          * Returns the size of the matrix.
          * @return pair containing the size of the matrix.
          */
-        [[nodiscard]]
-        constexpr auto size() const
+        constexpr auto size() const noexcept
         {
             return std::make_pair<size_t, size_t>(Rows, Cols);
         }
@@ -105,14 +106,12 @@ namespace fdt {
          * Returns the number of rows.
          * @return size_t containing the number of rows.
          */
-        [[nodiscard]]
         constexpr auto rows() const { return Rows; }
 
         /**
          * Returns the number of columns.
          * @return size_t containing the number of columns.
          */
-        [[nodiscard]]
         constexpr auto cols() const { return Cols; }
 
         /**
@@ -121,24 +120,22 @@ namespace fdt {
          * otherwise.
          */
         [[nodiscard]]
-        constexpr bool empty() const { return (Rows * Cols) == 0; }
+        constexpr bool empty() const noexcept { return (Rows * Cols) == 0; }
 
         /**
          * Returns an iterator to the beginning of the matrix.
          * @return fdt::rand_iterator to the beginning of the matrix.
          */
-        [[nodiscard]]
         constexpr iterator begin() { return rand_iterator(_data); }
-        [[nodiscard]]
+
         constexpr const_iterator begin() const { return rand_iterator(_data); }
 
         /**
          * Returns an iterator to the end of the matrix.
          * @return fdt::rand_iterator to the end of the matrix.
          */
-        [[nodiscard]]
         constexpr iterator end() { return rand_iterator(_data + Rows * Cols); }
-        [[nodiscard]]
+
         constexpr const_iterator end() const { return rand_iterator(_data + Rows * Cols); }
 
         /**
@@ -149,9 +146,8 @@ namespace fdt {
          * conversion of indices if access through the underlying data
          * structure is needed.
          */
-        [[nodiscard]]
         constexpr auto data() { return _data; }
-        [[nodiscard]]
+
         constexpr auto data() const { return _data; }
 
         /**
@@ -161,14 +157,12 @@ namespace fdt {
          * @param col current column.
          * @return value_type reference to the indexed object.
          */
-        [[nodiscard]]
         constexpr reference
         operator()(size_t row, size_t col) noexcept
         {
             return _data[Cols * row + col];
         }
 
-        [[nodiscard]]
         constexpr const_reference
         operator()(size_t row, size_t col) const noexcept
         {
@@ -184,7 +178,6 @@ namespace fdt {
          * @param col current column.
          * @return value_type reference to the indexed element.
          */
-        [[nodiscard]]
         constexpr reference
     	at(size_t row, size_t col)
         {
@@ -193,7 +186,6 @@ namespace fdt {
             return _data[Cols * row + col];
         }
 
-        [[nodiscard]]
     	constexpr const_reference
     	at(size_t row, size_t col) const
         {
@@ -207,7 +199,7 @@ namespace fdt {
          * by using the iterative method.
          * @return double determinant value.
          */
-        [[nodiscard]] double determinant() const noexcept
+        double determinant() const noexcept
         {
             if (Rows != Cols)
                 throw matrix_non_square("determinant is not defined"
@@ -270,7 +262,6 @@ namespace fdt {
          * @return new matrix object containing the transpose of the
          * original matrix.
          */
-        [[nodiscard]]
         constexpr auto transpose() const
         {
             matrix<Ty, Cols, Rows> mat;
@@ -311,6 +302,14 @@ namespace fdt {
             if (*(l.data() + i) != *(r.data() + i)) return false;
         return true;
 	}
+
+    template<typename Ty, std::size_t Rows, std::size_t Cols>
+    constexpr bool operator!=(
+        const matrix<Ty, Rows, Cols>& l,
+        const matrix<Ty, Rows, Cols>& r)
+    {
+        return !(l == r);
+    }
 
 	template<typename Ty, std::size_t Rows, std::size_t Cols>
     constexpr auto operator+(

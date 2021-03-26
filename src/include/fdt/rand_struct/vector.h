@@ -40,7 +40,7 @@ namespace fdt {
 		 * of further elements. The complexity of this container is linear
 		 * in the specified size.
 		 */
-		constexpr explicit vector(std::size_t n)
+		constexpr vector(std::size_t n)
 			: _data(AllocTraits::allocate(_alloc, _def_alloc + n)), _size(n),
 			_capacity(_def_alloc + n)
 		{
@@ -147,7 +147,8 @@ namespace fdt {
 		 * @return true if vector is empty.
 		 * @return false if vector is not empty.
 		 */
-		constexpr bool empty() const { return _size == 0 || _capacity == 0; }
+		[[nodiscard]]
+		constexpr bool empty() const noexcept { return _size == 0 || _capacity == 0; }
 
 		/**
 		 * @brief Returns the size of the vector (number of elements).
@@ -167,23 +168,23 @@ namespace fdt {
 		 * @brief Returns the first element of the vector.
 		 * @return constexpr reference to the first element of the vector.
 		 */
-		[[nodiscard]] constexpr reference front() { return *_data; }
-		[[nodiscard]] constexpr const_reference front() const { return *_data; }
+		constexpr reference front() { return *_data; }
+		constexpr const_reference front() const { return *_data; }
 
 		/**
 		 * @brief Returns the last element of the vector.
 		 * @return constexpr reference to the last element of the vector.
 		 */
-		[[nodiscard]] constexpr reference back() { return *(_data + _size - 1); }
-		[[nodiscard]] constexpr const_reference back() const { return *(_data + _size - 1); }
+		constexpr reference back() { return *(_data + _size - 1); }
+		constexpr const_reference back() const { return *(_data + _size - 1); }
 
 		/**
 		 * @brief Returns a pointer to the underlying data structure
 		 * containing all the elements of the vector.
 		 * @return constexpr pointer to the underlying memory area.
 		 */
-		[[nodiscard]] constexpr pointer data() { return _data; }
-		[[nodiscard]] constexpr const_pointer data() const { return _data; }
+		constexpr pointer data() { return _data; }
+		constexpr const_pointer data() const { return _data; }
 
 		/**
 		 * @brief Returns an element with position i using bounds-checked
@@ -443,6 +444,12 @@ namespace fdt {
 		for (size_t i = 0; i < l.size(); ++i)
 			if (l[i] != r[i]) return false;
 		return true;
+	}
+
+	template <typename Ty>
+	constexpr bool operator!=(const vector<Ty>& l, const vector<Ty>& r)
+	{
+		return !(l == r);
 	}
 
 	/**

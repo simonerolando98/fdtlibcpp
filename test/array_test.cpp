@@ -97,3 +97,16 @@ TEST(array, iterator_test)
 	ASSERT_EQ(23, sum);
 	(void)arr;
 }
+
+TEST(array, reverse_iterator_test)
+{
+	const fdt::array<int, 5> arr{ 1, 2, 3, 4, 5 };
+	const fdt::array<int, 5> rev{ 5, 4, 3, 2, 1 };
+	size_t i = 0;
+	for (auto it = arr.rbegin(); it != arr.rend(); ++it) {
+		ASSERT_EQ(rev[i], *it);
+		++i;
+	}
+	(void)arr;
+	(void)rev;
+}
