@@ -1,5 +1,5 @@
-#ifndef FDT_RAND_STRUCT_VECTOR_H
-#define FDT_RAND_STRUCT_VECTOR_H
+#ifndef FDT_RANDOM_VECTOR_H
+#define FDT_RANDOM_VECTOR_H
 
 #include <memory>
 #include <initializer_list>
@@ -22,6 +22,7 @@ namespace fdt {
 		using const_reverse_iterator = const reverse_rand_iterator<Ty>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
+		using allocator_type = Allocator;
 
 		/**
 		 * @brief Default constructor. Allocates a buffer with
@@ -29,7 +30,7 @@ namespace fdt {
 		 * of further elements in the vector.
 		 */
 		constexpr vector()
-			: _data(AllocTraits::allocate(_alloc, _def_alloc)), _size(0),
+			: _data(allocator_traits::allocate(_alloc, _def_alloc)), _size(0),
 			_capacity(_def_alloc)
 		{}
 
@@ -41,11 +42,11 @@ namespace fdt {
 		 * in the specified size.
 		 */
 		constexpr vector(std::size_t n)
-			: _data(AllocTraits::allocate(_alloc, _def_alloc + n)), _size(n),
+			: _data(allocator_traits::allocate(_alloc, _def_alloc + n)), _size(n),
 			_capacity(_def_alloc + n)
 		{
 			for (size_t i = 0; i < _size; ++i)
-				AllocTraits::construct(_alloc, _data + i);
+				allocator_traits::construct(_alloc, _data + i);
 		}
 
 		/**
@@ -54,12 +55,12 @@ namespace fdt {
 		 * this constructor is linear in size of the vector.
 		 */
 		constexpr vector(const vector& other)
-			: _data(AllocTraits::allocate(_alloc, other._capacity)),
+			: _data(allocator_traits::allocate(_alloc, other._capacity)),
 			_size(other._size),
 			_capacity(other._capacity)
 		{
 			for (size_t i = 0; i < other.size(); ++i)
-				AllocTraits::construct(_alloc, _data + i, other[i]);
+				allocator_traits::construct(_alloc, _data + i, other[i]);
 		}
 
 		/**
@@ -87,12 +88,12 @@ namespace fdt {
 		 * length of the initializer list.
 		 */
 		constexpr vector(const std::initializer_list<Ty>& ilist)
-			: _data(AllocTraits::allocate(_alloc, _def_alloc + ilist.size())),
+			: _data(allocator_traits::allocate(_alloc, _def_alloc + ilist.size())),
 			_size(ilist.size()), _capacity(_def_alloc + ilist.size())
 		{
 
 			for (size_t i = 0; i < ilist.size(); ++i)
-				AllocTraits::construct(_alloc, _data + i,
+				allocator_traits::construct(_alloc, _data + i,
 					*(ilist.begin() + i));
 		}
 
@@ -128,7 +129,12 @@ namespace fdt {
 
 		~vector()
 		{
-			AllocTraits::deallocate(_alloc, _data, _capacity);
+			allocator_traits::deallocate(_alloc, _data, _capacity);
+		}
+
+		constexpr allocator_type get_allocator() const noexcept
+		{
+			return _alloc;
 		}
 
 		/**
@@ -298,13 +304,13 @@ namespace fdt {
 		{
 			if (n <= _capacity) return;
 			auto* a = _data;
-			a = AllocTraits::allocate(_alloc, n);
+			a = allocator_traits::allocate(_alloc, n);
 
 			// copying vector elements into new buffer
 			std::copy(_data, _data + _size, a);
 
 			// de-allocating old buffer
-			AllocTraits::deallocate(_alloc, _data, _capacity);
+			allocator_traits::deallocate(_alloc, _data, _capacity);
 			_capacity = n;
 			_data = a;
 		}
@@ -339,10 +345,10 @@ namespace fdt {
 			if (_size == _capacity) return;
 			auto* a = _data;
 
-			a = AllocTraits::allocate(_alloc, _size);
+			a = allocator_traits::allocate(_alloc, _size);
 			std::copy(_data, _data + _size, a);
 
-			AllocTraits::deallocate(_alloc, _data, _capacity);
+			allocator_traits::deallocate(_alloc, _data, _capacity);
 			_capacity = _size;
 			_data = a;
 		}
@@ -355,11 +361,11 @@ namespace fdt {
 		{
 			if (_size + 1 < _capacity) {
 				_size++;
-				AllocTraits::construct(_alloc, _data + _size - 1, value);
+				allocator_traits::construct(_alloc, _data + _size - 1, value);
 			} else {
 				reserve(_capacity * 2);
 				_size++;
-				AllocTraits::construct(_alloc, _data + _size - 1, value);
+				allocator_traits::construct(_alloc, _data + _size - 1, value);
 			}
 		}
 
@@ -374,13 +380,13 @@ namespace fdt {
 		{
 			if (_size + 1 < _capacity) {
 				_size++;
-				AllocTraits::construct(_alloc, _data + _size - 1, 
+				allocator_traits::construct(_alloc, _data + _size - 1, 
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
 			} else {
 				reserve(_capacity * 2);
 				_size++;
-				AllocTraits::construct(_alloc, _data + _size - 1,
+				allocator_traits::construct(_alloc, _data + _size - 1,
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
 			}
@@ -402,19 +408,19 @@ namespace fdt {
 		 */
 		constexpr void swap(vector& other) noexcept
 		{
-			if (other._size > _size) resize(other._size);
-			for (size_t i = 0; i < _size; ++i)
-				std::swap(*(_data + i), *(other._data + i));
-			std::swap(_size, other._size);
+			std::swap(other._data, _data);
+			std::swap(other._capacity, _capacity);
+			std::swap(other._size, _size);
+			std::swap(other._alloc, _alloc);
 		}
 
 	private:
+		using allocator_traits = std::allocator_traits<Allocator>;
 		const size_type _def_alloc = 8;
 		Ty* _data = nullptr;
 		size_type _size;
 		size_type _capacity;
-		Allocator _alloc;
-		using AllocTraits = std::allocator_traits<Allocator>;
+		allocator_type _alloc;
 	};
 
 	/**

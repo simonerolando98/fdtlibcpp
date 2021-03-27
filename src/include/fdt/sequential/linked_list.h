@@ -1,5 +1,5 @@
-#ifndef FDT_LIST_LINKED_LIST_H
-#define FDT_LIST_LINKED_LIST_H
+#ifndef FDT_SEQUENTIAL_LINKED_LIST_H
+#define FDT_SEQUENTIAL_LINKED_LIST_H
 
 #include <cstddef>
 #include <memory>
@@ -50,7 +50,7 @@ namespace fdt {
         using const_pointer = const Ty*;
         using iterator = list_iterator<dl_node<Ty> >;
         using const_iterator = const list_iterator<dl_node<Ty> >;
-        using alloc = std::allocator_traits<Allocator>;
+        using allocator_type = Allocator;
 
         /**
          * @brief Default constructor. Constructs an empty list.
@@ -84,9 +84,8 @@ namespace fdt {
         */
         constexpr linked_list& operator=(const linked_list& other)
         {
-            _list_start = nullptr;
-            _size = 0;
-            for (auto& x : other) push_back(x);
+            linked_list copy(other);
+            copy.swap(*this);
             return *this;
         }
 
@@ -99,11 +98,8 @@ namespace fdt {
         */
         constexpr linked_list& operator=(linked_list&& other) noexcept
         {
-            if (this == &other)
-                return *this;
-        	
-            _list_start = std::move(other._list_start);
-            _size = std::move(other._size);
+            linked_list copy(std::move(other));
+            copy.swap(*this);
             return *this;
         }
 
@@ -136,13 +132,13 @@ namespace fdt {
         constexpr void push_front(const Ty& data)
         {
             if (is_null(_list_start)) {
-                _list_start = alloc::allocate(_alloc, 1);
-                alloc::construct(_alloc, _list_start, data);
+                _list_start = allocator_traits::allocate(_alloc, 1);
+                allocator_traits::construct(_alloc, _list_start, data);
                 _size++;
             }
             else {
-                _list_start->_prev = alloc::allocate(_alloc, 1);
-                alloc::construct(_alloc, _list_start->_prev, data, nullptr, _list_start);
+                _list_start->_prev = allocator_traits::allocate(_alloc, 1);
+                allocator_traits::construct(_alloc, _list_start->_prev, data, nullptr, _list_start);
                 _list_start = _list_start->_prev;
                 _size++;
             }
@@ -158,14 +154,14 @@ namespace fdt {
         constexpr reference emplace_front(Args&&... args)
         {
             if (is_null(_list_start)) {
-                _list_start = alloc::allocate(_alloc, 1);
-                alloc::construct(_alloc, _list_start, std::forward<Args>(args)...);
+                _list_start = allocator_traits::allocate(_alloc, 1);
+                allocator_traits::construct(_alloc, _list_start, std::forward<Args>(args)...);
                 _size++;
                 return _list_start->_data;
             }
             else {
-                _list_start->_prev = alloc::allocate(_alloc, 1);
-                alloc::construct(_alloc, _list_start->_prev, std::forward<Args>(args)..., nullptr, _list_start);
+                _list_start->_prev = allocator_traits::allocate(_alloc, 1);
+                allocator_traits::construct(_alloc, _list_start->_prev, std::forward<Args>(args)..., nullptr, _list_start);
                 _list_start = _list_start->_prev;
                 _size++;
                 return _list_start->_prev->_data;
@@ -182,8 +178,8 @@ namespace fdt {
 
             auto list = _list_start;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = alloc::allocate(_alloc, 1);
-            alloc::construct(_alloc, list->_next, data, list, nullptr);
+            list->_next = allocator_traits::allocate(_alloc, 1);
+            allocator_traits::construct(_alloc, list->_next, data, list, nullptr);
         }
 
         /**
@@ -200,8 +196,8 @@ namespace fdt {
 
             auto list = _list_start;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = alloc::allocate(_alloc, 1);
-            alloc::construct(_alloc, list->_next, std::forward<Args>(args)..., list, nullptr);
+            list->_next = allocator_traits::allocate(_alloc, 1);
+            allocator_traits::construct(_alloc, list->_next, std::forward<Args>(args)..., list, nullptr);
         }
 
         /**
@@ -214,7 +210,7 @@ namespace fdt {
             auto del = _list_start;
             _list_start = _list_start->_next;
             _list_start->_prev = nullptr;
-            alloc::deallocate(_alloc, del, 1);
+            allocator_traits::deallocate(_alloc, del, 1);
             --_size;
         }
 
@@ -228,7 +224,7 @@ namespace fdt {
             auto del = list;
             list = list->_prev;
             list->_next = nullptr;
-            alloc::deallocate(_alloc, del, 1);
+            allocator_traits::deallocate(_alloc, del, 1);
             --_size;
         }
 
@@ -286,6 +282,13 @@ namespace fdt {
             return list->_data;
         }
 
+        constexpr void swap(linked_list& other) noexcept
+        {
+            std::swap(other._list_start, _list_start);
+            std::swap(other._size, _size);
+            std::swap(other._alloc, _alloc);
+        }
+
     private:
         constexpr void _list_destroy_clear()
         {
@@ -302,9 +305,10 @@ namespace fdt {
         }
 
         using _list_type = dl_node<Ty>*;
-        Allocator _alloc;
+        allocator_type _alloc;
         _list_type _list_start;
         std::size_t _size;
+        using allocator_traits = std::allocator_traits<Allocator>;
     };
 }
 

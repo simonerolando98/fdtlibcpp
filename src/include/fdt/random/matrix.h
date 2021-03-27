@@ -1,5 +1,5 @@
-#ifndef FDT_MATRIX_STATIC_MATRIX_H
-#define FDT_MATRIX_STATIC_MATRIX_H
+#ifndef FDT_RANDOM_MATRIX_H
+#define FDT_RANDOM_MATRIX_H
 
 #include <cmath>
 #include <utility>
@@ -35,12 +35,13 @@ namespace fdt {
         using const_iterator = const fdt::rand_iterator<Ty>;
         using reverse_iterator = reverse_rand_iterator<Ty>;
         using const_reverse_iterator = const reverse_rand_iterator<Ty>;
+        using allocator_type = Allocator;
 
         /**
          * Default constructor. Constructs an empty matrix object.
          */
         constexpr matrix()
-    		: _data(AllocTraits::allocate(_alloc, Rows * Cols)) {}
+    		: _data(allocator_traits::allocate(_alloc, Rows * Cols)) {}
 
         /**
          * Initializing constructor. Constructs a new matrix object
@@ -50,7 +51,7 @@ namespace fdt {
          */
         constexpr matrix(const std::initializer_list<Ty> init)
         {
-            _data = AllocTraits::allocate(_alloc, Rows * Cols);
+            _data = allocator_traits::allocate(_alloc, Rows * Cols);
             if (init.size() == Rows * Cols) {
                 size_t i = 0;
                 for (auto& x : init) {
@@ -69,7 +70,7 @@ namespace fdt {
          */
         constexpr matrix(const matrix& other)
         {
-            _data = AllocTraits::allocate(_alloc, Rows * Cols);
+            _data = allocator_traits::allocate(_alloc, Rows * Cols);
             std::copy(other._data, other._data + (Rows * Cols - 1), _data);
         }
 
@@ -82,7 +83,15 @@ namespace fdt {
         constexpr matrix(matrix&& other) noexcept
             : _data(std::move(other._data)) { other._data = nullptr; }
 
-        ~matrix() { AllocTraits::deallocate(_alloc, _data, Rows * Cols); }
+        ~matrix()
+        {
+            allocator_traits::deallocate(_alloc, _data, Rows * Cols);
+        }
+
+        constexpr allocator_type get_allocator() const noexcept
+        {
+            return _alloc;
+        }
 
         /**
          * Fills the matrix with a given value.
@@ -194,6 +203,12 @@ namespace fdt {
             return _data[Cols * row + col];
         }
 
+        constexpr void swap(matrix& other)
+        {
+            std::swap(other._data, _data);
+            std::swap(other._alloc, _alloc);
+        }
+
         /**
          * Calculates the determinant of an arithmetic compliant matrix
          * by using the iterative method.
@@ -271,26 +286,23 @@ namespace fdt {
             return mat;
         }
 
-        
         constexpr matrix& operator=(const matrix& other)
         {
-            if (this != &other)
-                std::copy(other._data, other._data + Rows * Cols, _data);
+            matrix copy(other);
+            copy.swap(*this);
             return *this;
         }
 
-		constexpr matrix& operator=(matrix&& other) noexcept
+        constexpr matrix& operator=(matrix&& other)
         {
-	        if (this != &other) {
-                _data = std::move(other._data);
-                other._data = nullptr;
-	        }
+            matrix copy(std::move(other));
+            copy.swap(*this);
             return *this;
         }
     private:
-        Allocator _alloc;
-        using AllocTraits = std::allocator_traits<Allocator>;
+        allocator_type _alloc;
         Ty* _data;
+        using allocator_traits = std::allocator_traits<Allocator>;
     };
 
 	template<typename Ty, std::size_t Rows, std::size_t Cols>

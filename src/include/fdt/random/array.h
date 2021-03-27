@@ -1,5 +1,5 @@
-#ifndef FDT_RAND_STRUCT_ARRAY_H
-#define FDT_RAND_STRUCT_ARRAY_H
+#ifndef FDT_RANDOM_ARRAY_H
+#define FDT_RANDOM_ARRAY_H
 
 #include <memory>
 #include <algorithm>
@@ -217,7 +217,21 @@ namespace fdt {
 		*/
 		constexpr void swap(array& other)
 		{
-			for (size_t i = 0; i < Size; ++i) std::swap(_data + i, other._data + i);
+			std::swap(other._data, _data);
+		}
+
+		constexpr array& operator=(const array& other)
+		{
+			array copy(other);
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr array& operator=(array&& other)
+		{
+			array copy(std::move(other));
+			copy.swap(*this);
+			return *this;
 		}
 
 	private:

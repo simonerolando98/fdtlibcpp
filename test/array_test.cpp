@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "fdt/rand_struct/array.h"
+#include "fdt/random/array.h"
 #include <numeric>
 
 TEST(array, construct_default)
