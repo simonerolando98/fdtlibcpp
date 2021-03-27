@@ -11,48 +11,46 @@
 namespace fdt {
 
     /**
+     * @brief Doubly linked list node template implementation.
+     * @tparam Tx type of linked list node data payload.
+    */
+    template <typename Tx>
+    struct dl_node {
+    public:
+        using value_type = Tx;
+
+        constexpr dl_node() : _prev(nullptr), _next(nullptr) {}
+
+        constexpr
+            explicit dl_node(const Tx& data, dl_node<Tx>* prev = nullptr, dl_node<Tx>* next = nullptr)
+            : _data(data), _prev(prev), _next(next) {}
+
+        template <typename... Args>
+        explicit constexpr
+            dl_node(Args&&... args, dl_node<Tx>* prev = nullptr, dl_node<Tx>* next = nullptr)
+            : _data(std::forward<Args>(args)...), _prev(prev), _next(next) {}
+
+        Tx _data;
+        dl_node<Tx>* _prev;
+        dl_node<Tx>* _next;
+    };
+
+    /**
      * @brief Template doubly linked list container.
      * @tparam Ty list data payload type.
     */
-    template <class Ty>
+    template <typename Ty, typename Allocator = std::allocator<dl_node<Ty> > >
     class linked_list {
-    public:
-        /**
-         * @brief Doubly linked list node template implementation.
-         * @tparam Tx type of linked list node data payload.
-        */
-        template <class Tx = Ty>
-        class Node {
-        public:
-            using value_type = Tx;
-            
-            constexpr Node() : _prev(nullptr), _next(nullptr) {}
-            
-            constexpr
-            explicit Node(const Tx& data, Node<Tx>* prev = nullptr, Node<Tx>* next = nullptr)
-                : _data(data), _prev(prev), _next(next) {}
-            
-            template <typename... Args>
-            explicit constexpr
-                Node(Args&&... args, Node<Ty>* prev = nullptr, Node<Tx>* next = nullptr)
-                : _data(std::forward<Args>(args)...), _prev(prev), _next(next) {}
-        private:
-            friend class linked_list<Tx>;
-            friend class list_iterator<Node<Tx> >;
-            
-            Tx _data;
-            Node<Tx>* _prev;
-            Node<Tx>* _next;
-        };
-        
+    public:        
         using value_type = Ty;
         using size_type = std::size_t;
         using reference = Ty&;
         using const_reference = const Ty&;
         using pointer = Ty*;
         using const_pointer = const Ty*;
-        using iterator = list_iterator<Node<Ty> >;
-        using const_iterator = const list_iterator<Node<Ty> >;
+        using iterator = list_iterator<dl_node<Ty> >;
+        using const_iterator = const list_iterator<dl_node<Ty> >;
+        using alloc = std::allocator_traits<Allocator>;
 
         /**
          * @brief Default constructor. Constructs an empty list.
@@ -117,15 +115,14 @@ namespace fdt {
          * @return true if empty, false otherwise.
         */
         [[nodiscard]]
-        constexpr bool empty() const
+        constexpr bool empty() const noexcept
         { return _size == 0 && is_null(_list_start); }
 
         /**
          * @brief Returns the size of the list.
          * @return linked_list::size_type list size.
         */
-        [[nodiscard]]
-        constexpr size_type size() const { return _size; }
+        constexpr size_type size() const noexcept { return _size; }
 
         /**
          * @brief Clears the list deleting every element and freeing memory.
@@ -139,11 +136,13 @@ namespace fdt {
         constexpr void push_front(const Ty& data)
         {
             if (is_null(_list_start)) {
-                _list_start = new Node<Ty>(data);
+                _list_start = alloc::allocate(_alloc, 1);
+                alloc::construct(_alloc, _list_start, data);
                 _size++;
             }
             else {
-                _list_start->_prev = new Node<Ty>(data, nullptr, _list_start);
+                _list_start->_prev = alloc::allocate(_alloc, 1);
+                alloc::construct(_alloc, _list_start->_prev, data, nullptr, _list_start);
                 _list_start = _list_start->_prev;
                 _size++;
             }
@@ -156,17 +155,20 @@ namespace fdt {
          * @param args constructor arguments.
         */
         template <typename... Args>
-        constexpr void emplace_front(Args&&... args)
+        constexpr reference emplace_front(Args&&... args)
         {
             if (is_null(_list_start)) {
-                _list_start = new Node<Ty>(std::forward<Args>(args)...);
+                _list_start = alloc::allocate(_alloc, 1);
+                alloc::construct(_alloc, _list_start, std::forward<Args>(args)...);
                 _size++;
+                return _list_start->_data;
             }
             else {
-                _list_start->_prev = new Node<Ty>(std::forward<Args>(args)...,
-                    nullptr, _list_start);
+                _list_start->_prev = alloc::allocate(_alloc, 1);
+                alloc::construct(_alloc, _list_start->_prev, std::forward<Args>(args)..., nullptr, _list_start);
                 _list_start = _list_start->_prev;
                 _size++;
+                return _list_start->_prev->_data;
             }
         }
 
@@ -180,7 +182,8 @@ namespace fdt {
 
             auto list = _list_start;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = new Node<Ty>(data, list, nullptr);
+            list->_next = alloc::allocate(_alloc, 1);
+            alloc::construct(_alloc, list->_next, data, list, nullptr);
         }
 
         /**
@@ -197,8 +200,8 @@ namespace fdt {
 
             auto list = _list_start;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = new Node<Ty>(std::forward<Args>(args)...,
-                    list, nullptr);
+            list->_next = alloc::allocate(_alloc, 1);
+            alloc::construct(_alloc, list->_next, std::forward<Args>(args)..., list, nullptr);
         }
 
         /**
@@ -211,7 +214,8 @@ namespace fdt {
             auto del = _list_start;
             _list_start = _list_start->_next;
             _list_start->_prev = nullptr;
-            delete del;
+            alloc::deallocate(_alloc, del, 1);
+            --_size;
         }
 
         /**
@@ -224,7 +228,8 @@ namespace fdt {
             auto del = list;
             list = list->_prev;
             list->_next = nullptr;
-            delete del;
+            alloc::deallocate(_alloc, del, 1);
+            --_size;
         }
 
     	constexpr iterator erase(const_iterator pos)
@@ -243,7 +248,7 @@ namespace fdt {
          * @return linked_list::rand_iterator<Ty> encapsulating list start point.
         */
         constexpr iterator begin() noexcept { return iterator(_list_start); }
-        [[nodiscard]]
+
     	constexpr const_iterator begin() const noexcept { return iterator(_list_start); }
 
         /**
@@ -252,7 +257,7 @@ namespace fdt {
          * @return nullptr_t.
         */
         constexpr iterator end() noexcept { return iterator(nullptr); }
-    	[[nodiscard]]
+
     	constexpr iterator end() const noexcept { return iterator(nullptr); }
 
         /**
@@ -260,8 +265,8 @@ namespace fdt {
          * @return linked_list::reference to the first element of the list.
         */
         constexpr reference front() { return _list_start->_data; }
-    	[[nodiscard]]
-    	constexpr const_reference  front() const { return _list_start->_data; }
+
+    	constexpr const_reference  front() const noexcept { return _list_start->_data; }
 
         /**
          * @brief Returns the last element of the list.
@@ -273,7 +278,7 @@ namespace fdt {
             for (; !is_null(list->_next); list = list->_next);
             return list->_data;
         }
-    	[[nodiscard]]
+
         constexpr const_reference back() const
         {
             auto list = _list_start;
@@ -296,7 +301,8 @@ namespace fdt {
             _size = 0;
         }
 
-        using _list_type = Node<Ty>*;
+        using _list_type = dl_node<Ty>*;
+        Allocator _alloc;
         _list_type _list_start;
         std::size_t _size;
     };
