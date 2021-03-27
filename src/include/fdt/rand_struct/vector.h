@@ -106,14 +106,8 @@ namespace fdt {
 		 */
 		constexpr vector& operator=(const vector& other)
 		{
-			if (_capacity < other._capacity) {
-				AllocTraits::deallocate(_alloc, _data, _capacity);
-				_data = AllocTraits(_alloc, other._capacity);
-				_capacity = other._capacity;
-			}
-			_size = other._size;
-			for (size_t i = 0; i < _size; ++i)
-				AllocTraits::construct(_alloc, _data + i, other[i]);
+			vector copy(other);
+			copy.swap(*this);
 			return *this;
 		}
 
@@ -127,12 +121,8 @@ namespace fdt {
 		 */
 		constexpr vector& operator=(vector&& other)
 		{
-			_data = std::move(other._data);
-			other._data = nullptr;
-			_capacity = other._capacity;
-			_size = other._capacity;
-			other._capacity = 0;
-			other._size = 0;
+			vector copy(std::move(other));
+			copy.swap(*this);
 			return *this;
 		}
 
@@ -327,15 +317,15 @@ namespace fdt {
 		 * @param n new size of the vector.
 		 */
 		constexpr void resize(size_t n)
-        {
-		    if (n <= _size) {
-		        _size = n;
-		        return;
-		    }
+		{
+			if (n <= _size) {
+				_size = n;
+				return;
+			}
 
-		    reserve(n * 2);
-		    _size = n;
-        }
+			reserve(n * 2);
+			_size = n;
+		}
 
 		/**
 		 * @brief Resizes the vector in order to perfectly fit the number of
@@ -361,17 +351,17 @@ namespace fdt {
 		 * @brief Adds an element of the given value to the end of the vector.
 		 * @param value element to add to the end of the vector.
 		 */
-        constexpr void push_back(const Ty& value)
-        {
-		    if (_size + 1 < _capacity) {
-		        _size++;
-		        AllocTraits::construct(_alloc, _data + _size - 1, value);
-		    } else {
-		        reserve(_capacity * 2);
-		        _size++;
-		        AllocTraits::construct(_alloc, _data + _size - 1, value);
-		    }
-        }
+		constexpr void push_back(const Ty& value)
+		{
+			if (_size + 1 < _capacity) {
+				_size++;
+				AllocTraits::construct(_alloc, _data + _size - 1, value);
+			} else {
+				reserve(_capacity * 2);
+				_size++;
+				AllocTraits::construct(_alloc, _data + _size - 1, value);
+			}
+		}
 
 		/**
 		 * @brief Constructs a new element at the end of the vector.
@@ -379,44 +369,44 @@ namespace fdt {
 		 * @param args variadic constructor arguments.
 		 * @return constexpr reference to the constructed element.
 		 */
-        template <typename... Args>
-        constexpr reference emplace_back(Args&&... args)
-        {
-		    if (_size + 1 < _capacity) {
-		        _size++;
+		template <typename... Args>
+		constexpr reference emplace_back(Args&&... args)
+		{
+			if (_size + 1 < _capacity) {
+				_size++;
 				AllocTraits::construct(_alloc, _data + _size - 1, 
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
-		    } else {
-		        reserve(_capacity * 2);
-		        _size++;
+			} else {
+				reserve(_capacity * 2);
+				_size++;
 				AllocTraits::construct(_alloc, _data + _size - 1,
 					std::forward<Args>(args)...);
 				return *(_data + _size - 1);
-		    }
-        }
+			}
+		}
 
 		/**
 		 * @brief Removes an element at the end of the vector by decreasing
 		 * the vector's size. This operation has constant complexity.
 		 */
-        constexpr void pop_back()
-        {
-		    _size--;
-        }
+		constexpr void pop_back()
+		{
+			_size--;
+		}
 
 		/**
 		 * @brief swaps the contents of another vector with the current instance of
 		 * the vector
 		 * @param other another vector instance to swap elements with.
 		 */
-        constexpr void swap(vector& other) noexcept
-        {
+		constexpr void swap(vector& other) noexcept
+		{
 			if (other._size > _size) resize(other._size);
-            for (size_t i = 0; i < _size; ++i)
-                std::swap(*(_data + i), *(other._data + i));
+			for (size_t i = 0; i < _size; ++i)
+				std::swap(*(_data + i), *(other._data + i));
 			std::swap(_size, other._size);
-        }
+		}
 
 	private:
 		const size_type _def_alloc = 8;
