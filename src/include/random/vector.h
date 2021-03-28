@@ -4,8 +4,8 @@
 #include <memory>
 #include <initializer_list>
 #include <utility>
-#include "fdt/iterator.h"
-#include "fdt/exception.h"
+#include "iterator.h"
+#include "exception.h"
 
 namespace fdt {
 	template <typename Ty, class Allocator = std::allocator<Ty> >

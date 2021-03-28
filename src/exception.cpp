@@ -1,4 +1,4 @@
-#include "fdt/exception.h"
+#include "exception.h"
 
 namespace fdt {
     matrix_out_of_range::matrix_out_of_range()

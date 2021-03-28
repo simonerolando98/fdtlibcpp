@@ -5,8 +5,8 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "fdt/utility.h"
-#include "fdt/iterator.h"
+#include "utility.h"
+#include "iterator.h"
 
 namespace fdt {
 	template <typename Tx>

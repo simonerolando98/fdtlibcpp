@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "fdt/sequential/singly_linked_list.h"
+#include "sequential/singly_linked_list.h"
 #include <array>
 
 TEST(singly_linked_list, construct_default)

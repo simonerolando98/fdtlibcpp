@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <initializer_list>
 #include <cstddef>
-#include "fdt/iterator.h"
-#include "fdt/exception.h"
+#include "iterator.h"
+#include "exception.h"
 
 namespace fdt {
 	

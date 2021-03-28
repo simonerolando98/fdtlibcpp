@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "fdt/random/vector.h"
+#include "random/vector.h"
 
 TEST(vector, construct_default)
 {

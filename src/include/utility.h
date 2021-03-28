@@ -1,0 +1,166 @@
+#ifndef FDT_UTILITY_H
+#define FDT_UTILITY_H
+
+#include <cmath>
+#include <iterator>
+#include <type_traits>
+
+namespace fdt {
+	template <typename Tx, typename Ty>
+	struct pair {
+		using first_type = Tx;
+		using second_type = Ty;
+
+		constexpr pair() = default;
+
+		constexpr pair(const Tx& first, const Ty& second)
+			: first(first), second(second) {}
+
+		constexpr pair(Tx&& first, Ty&& second)
+			: first(std::move(first)), second(std::move(second)) {}
+
+		constexpr pair(const pair& other)
+			: first(other.first), second(other.second) {}
+
+		constexpr pair(pair&& other)
+			: first(std::move(other.first)), second(std::move(other.second)) {}
+
+		constexpr pair& operator=(const pair& other)
+		{
+			pair copy(other);
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr pair& operator=(pair&& other)
+		{
+			pair copy(std::move(other));
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr void swap(pair& other)
+		{
+			std::swap(other.first, first);
+			std::swap(other.second, second);
+		}
+
+		first_type first;
+		second_type second;
+	};
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator==(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return (l.first == r.first && l.second == r.second);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator!=(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return !(l == r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator<(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return (l.first < r.first || l.second < r.second);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator>(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return !(l < r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator<=(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return (l.first <= r.first || l.second <= r.second);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr bool operator>=(const pair<Tx, Ty>& l, const pair<Tx, Ty>& r)
+	{
+		return !(l <= r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr void swap(pair<Tx, Ty>& l, pair<Tx, Ty>& r)
+	{
+		l.swap(r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr void swap(pair<Tx, Ty>&& l, pair<Tx, Ty>& r)
+	{
+		l.swap(r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr void swap(pair<Tx, Ty>& l, pair<Tx, Ty>&& r)
+	{
+		l.swap(r);
+	}
+
+	template <typename Tx, typename Ty>
+	constexpr pair<Tx, Ty> make_pair(Tx f, Ty s)
+	{
+		return pair<Tx, Ty>(f, s);
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 0, Tx>::type>
+	constexpr Tx& get(pair<Tx, Ty>& p)
+	{
+		return p.first;
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 1, Ty>::type>
+	constexpr Ty& get(pair<Tx, Ty>& p)
+	{
+		return p.second;
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 0, Tx>::type>
+	constexpr const Tx& get(const pair<Tx, Ty>& p)
+	{
+		return p.first;
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 1, Ty>::type>
+	constexpr const Ty& get(const pair<Tx, Ty>& p)
+	{
+		return p.second;
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 0, Tx>::type>
+		constexpr Tx get(pair<Tx, Ty>&& p)
+	{
+		return p.first;
+	}
+
+	template <std::size_t I, typename Tx, typename Ty,
+		typename = std::enable_if<I == 1, Ty>::type>
+		constexpr Ty get(pair<Tx, Ty>&& p)
+	{
+		return p.second;
+	}
+
+	/**
+	 * @brief Checks if a pointer of any type is equal to nullptr.
+	 * @tparam Ptr pointer type. Can be deduced at compile time.
+	 * @param ptr effective pointer.
+	 * @return true if the pointer is null, false otherwise.
+	*/
+	template <class Ptr>
+	constexpr bool is_null(Ptr ptr) { return nullptr == ptr; }
+
+	constexpr bool is_null(std::nullptr_t) { return true; }
+}
+
+#endif
