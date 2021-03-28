@@ -121,13 +121,9 @@ namespace fdt {
 
         constexpr auto operator*() const { return *_iter; }
 
-        auto operator+(int p)
+        constexpr auto operator+(int p)
         {
-            auto iter = _iter;
-            for (int i = 0; i < p; ++i) {
-                if (iter) --iter;
-                else break;
-            }
+            auto iter = *this + p;
             return iter;
         }
 

@@ -6,6 +6,11 @@
 #include <type_traits>
 
 namespace fdt {
+	/**
+	 * @brief Simple reimplementation of a pair of data.
+	 * @tparam Tx first element type.
+	 * @tparam Ty second element type.
+	 */
 	template <typename Tx, typename Ty>
 	struct pair {
 		using first_type = Tx;
@@ -39,6 +44,10 @@ namespace fdt {
 			return *this;
 		}
 
+		/**
+		 * @brief Swaps current pair instance with another.
+		 * @param other another pair instance.
+		 */
 		constexpr void swap(pair& other)
 		{
 			std::swap(other.first, first);
@@ -109,46 +118,28 @@ namespace fdt {
 		return pair<Tx, Ty>(f, s);
 	}
 
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 0, Tx>::type>
-	constexpr Tx& get(pair<Tx, Ty>& p)
+	template <std::size_t I, typename Tx, typename Ty>
+	constexpr auto& get(pair<Tx, Ty>& p)
 	{
-		return p.first;
+		static_assert(I < 2);
+		if constexpr (I == 0) return p.first;
+		if constexpr (I == 1) return p.second;
 	}
 
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 1, Ty>::type>
-	constexpr Ty& get(pair<Tx, Ty>& p)
+	template <std::size_t I, typename Tx, typename Ty>
+	constexpr const auto& get(const pair<Tx, Ty>& p)
 	{
-		return p.second;
+		static_assert(I < 2);
+		if constexpr (I == 0) return p.first;
+		if constexpr (I == 1) return p.second;
 	}
 
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 0, Tx>::type>
-	constexpr const Tx& get(const pair<Tx, Ty>& p)
+	template <std::size_t I, typename Tx, typename Ty>
+	constexpr auto get(pair<Tx, Ty>&& p)
 	{
-		return p.first;
-	}
-
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 1, Ty>::type>
-	constexpr const Ty& get(const pair<Tx, Ty>& p)
-	{
-		return p.second;
-	}
-
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 0, Tx>::type>
-		constexpr Tx get(pair<Tx, Ty>&& p)
-	{
-		return p.first;
-	}
-
-	template <std::size_t I, typename Tx, typename Ty,
-		typename = std::enable_if<I == 1, Ty>::type>
-		constexpr Ty get(pair<Tx, Ty>&& p)
-	{
-		return p.second;
+		static_assert(I < 2);
+		if constexpr (I == 0) return p.first;
+		if constexpr (I == 1) return p.second;
 	}
 
 	/**

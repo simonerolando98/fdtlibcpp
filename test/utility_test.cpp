@@ -27,9 +27,10 @@ TEST(pair, swap)
 
 TEST(pair, get)
 {
-	auto p = fdt::make_pair<int, std::string>(1, "Test");
+	const auto p = fdt::make_pair<int, std::string>(1, "Test");
 	auto f = fdt::get<0>(p);
 	auto s = fdt::get<1>(p);
+	// auto fail = fdt::get<2>(p);
 	ASSERT_EQ(f, p.first);
 	ASSERT_EQ(s, p.second);
 }
