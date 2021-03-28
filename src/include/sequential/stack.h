@@ -5,8 +5,7 @@
 
 namespace fdt {
     template <typename Ty,
-            typename Allocator = std::allocator<Ty>,
-            typename Container = vector<Ty, Allocator>>
+            typename Container = vector<Ty>>
     class stack {
     public:
         using value_type = typename Container::value_type;
@@ -76,44 +75,44 @@ namespace fdt {
         friend constexpr bool operator>=(const stack&, const stack&);
     };
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator==(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator==(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return (l.cont_ == r.cont_);
     }
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator!=(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator!=(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return !(l == r);
     }
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator<(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator<(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return (l.cont_ < r.cont_);
     }
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator>(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator>(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return !(l < r);
     }
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator<=(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator<=(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return (l.cont_ <= r.cont_);
     }
 
-    template <typename Ty, typename Container, typename Allocator>
-    constexpr bool operator>=(const stack<Ty, Container, Allocator>& l,
-                                const stack<Ty, Container, Allocator>& r)
+    template <typename Ty, typename Container>
+    constexpr bool operator>=(const stack<Ty, Container>& l,
+                                const stack<Ty, Container>& r)
     {
         return !(l <= r);
     }
