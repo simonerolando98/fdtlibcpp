@@ -30,8 +30,8 @@ namespace fdt {
 		 * of further elements in the vector.
 		 */
 		constexpr vector()
-			: _data(allocator_traits::allocate(_alloc, _def_alloc)), _size(0),
-			_capacity(_def_alloc)
+			: data_(allocator_traits::allocate(alloc_, def_alloc_)), size_(0),
+			capacity_(def_alloc_)
 		{}
 
 		/**
@@ -42,11 +42,11 @@ namespace fdt {
 		 * in the specified size.
 		 */
 		constexpr vector(std::size_t n)
-			: _data(allocator_traits::allocate(_alloc, _def_alloc + n)), _size(n),
-			_capacity(_def_alloc + n)
+			: data_(allocator_traits::allocate(alloc_, def_alloc_ + n)), size_(n),
+			capacity_(def_alloc_ + n)
 		{
-			for (size_t i = 0; i < _size; ++i)
-				allocator_traits::construct(_alloc, _data + i);
+			for (size_t i = 0; i < size_; ++i)
+				allocator_traits::construct(alloc_, data_ + i);
 		}
 
 		/**
@@ -55,12 +55,12 @@ namespace fdt {
 		 * this constructor is linear in size of the vector.
 		 */
 		constexpr vector(const vector& other)
-			: _data(allocator_traits::allocate(_alloc, other._capacity)),
-			_size(other._size),
-			_capacity(other._capacity)
+			: data_(allocator_traits::allocate(alloc_, other.capacity_)),
+			size_(other.size_),
+			capacity_(other.capacity_)
 		{
 			for (size_t i = 0; i < other.size(); ++i)
-				allocator_traits::construct(_alloc, _data + i, other[i]);
+				allocator_traits::construct(alloc_, data_ + i, other[i]);
 		}
 
 		/**
@@ -71,12 +71,12 @@ namespace fdt {
 		 * 
 		 */
 		constexpr vector(vector&& other)
-			: _data(std::move(other._data)),
-			_size(other._size), _capacity(other._capacity)
+			: data_(std::move(other.data_)),
+			size_(other.size_), capacity_(other.capacity_)
 		{
-			other._data = nullptr;
-			other._size = 0;
-			other._capacity = 0;
+			other.data_ = nullptr;
+			other.size_ = 0;
+			other.capacity_ = 0;
 		}
 
 		/**
@@ -88,12 +88,12 @@ namespace fdt {
 		 * length of the initializer list.
 		 */
 		constexpr vector(const std::initializer_list<Ty>& ilist)
-			: _data(allocator_traits::allocate(_alloc, _def_alloc + ilist.size())),
-			_size(ilist.size()), _capacity(_def_alloc + ilist.size())
+			: data_(allocator_traits::allocate(alloc_, def_alloc_ + ilist.size())),
+			size_(ilist.size()), capacity_(def_alloc_ + ilist.size())
 		{
 
 			for (size_t i = 0; i < ilist.size(); ++i)
-				allocator_traits::construct(_alloc, _data + i,
+				allocator_traits::construct(alloc_, data_ + i,
 					*(ilist.begin() + i));
 		}
 
@@ -129,12 +129,12 @@ namespace fdt {
 
 		~vector()
 		{
-			allocator_traits::deallocate(_alloc, _data, _capacity);
+			allocator_traits::deallocate(alloc_, data_, capacity_);
 		}
 
 		constexpr allocator_type get_allocator() const noexcept
 		{
-			return _alloc;
+			return alloc_;
 		}
 
 		/**
@@ -144,13 +144,13 @@ namespace fdt {
 		 * @return false if vector is not empty.
 		 */
 		[[nodiscard]]
-		constexpr bool empty() const noexcept { return _size == 0 || _capacity == 0; }
+		constexpr bool empty() const noexcept { return size_ == 0 || capacity_ == 0; }
 
 		/**
 		 * @brief Returns the size of the vector (number of elements).
 		 * @return constexpr size_type size of vector.
 		 */
-		constexpr size_type size() const { return _size; }
+		constexpr size_type size() const { return size_; }
 		
 		/**
 		 * @brief Returns the capacity of the vector, which represents
@@ -158,29 +158,29 @@ namespace fdt {
 		 * memory locations past size() are not initialized or constructed.
 		 * @return constexpr size_type capacity of the vector.
 		 */
-		constexpr size_type capacity() const { return _capacity; }
+		constexpr size_type capacity() const { return capacity_; }
 
 		/**
 		 * @brief Returns the first element of the vector.
 		 * @return constexpr reference to the first element of the vector.
 		 */
-		constexpr reference front() { return *_data; }
-		constexpr const_reference front() const { return *_data; }
+		constexpr reference front() { return *data_; }
+		constexpr const_reference front() const { return *data_; }
 
 		/**
 		 * @brief Returns the last element of the vector.
 		 * @return constexpr reference to the last element of the vector.
 		 */
-		constexpr reference back() { return *(_data + _size - 1); }
-		constexpr const_reference back() const { return *(_data + _size - 1); }
+		constexpr reference back() { return *(data_ + size_ - 1); }
+		constexpr const_reference back() const { return *(data_ + size_ - 1); }
 
 		/**
 		 * @brief Returns a pointer to the underlying data structure
 		 * containing all the elements of the vector.
 		 * @return constexpr pointer to the underlying memory area.
 		 */
-		constexpr pointer data() { return _data; }
-		constexpr const_pointer data() const { return _data; }
+		constexpr pointer data() { return data_; }
+		constexpr const_pointer data() const { return data_; }
 
 		/**
 		 * @brief Returns an element with position i using bounds-checked
@@ -191,13 +191,13 @@ namespace fdt {
 		 */
 		constexpr reference at(size_t i)
 		{
-			if (i >= _size) throw array_out_of_range();
-			return *(_data + i);
+			if (i >= size_) throw array_out_of_range();
+			return *(data_ + i);
 		}
 		constexpr const_reference at(size_t i) const
 		{
-			if (i >= _size) throw array_out_of_range();
-			return *(_data + i);
+			if (i >= size_) throw array_out_of_range();
+			return *(data_ + i);
 		}
 
 		/**
@@ -207,21 +207,21 @@ namespace fdt {
 		 */
 		constexpr reference operator[](size_t i) noexcept
 		{
-			return *(_data + i);
+			return *(data_ + i);
 		}
 		constexpr const_reference operator[](size_t i) const noexcept
 		{
-			return *(_data + i);
+			return *(data_ + i);
 		}
 
 		/**
 		 * @brief Returns an iterator to the beginning of the vector.
 		 * @return constexpr iterator value to the start of the vector.
 		 */
-		constexpr iterator begin() { return iterator(_data); }
+		constexpr iterator begin() { return iterator(data_); }
 		constexpr const_iterator begin() const noexcept
 		{
-			return iterator(_data);
+			return iterator(data_);
 		}
 
 		/**
@@ -230,18 +230,18 @@ namespace fdt {
 		 */
 		constexpr const_iterator cbegin() const noexcept
 		{
-			return iterator(_data);
+			return iterator(data_);
 		}
 
 		/**
 		 * @brief Returns an iterator to the end of the vector.
 		 * @return constexpr iterator value to the end of the vector.
 		 */
-		constexpr iterator end() { return iterator(_data + _size); }
+		constexpr iterator end() { return iterator(data_ + size_); }
 
 		constexpr const_iterator end() const noexcept
 		{
-			return iterator(_data + _size);
+			return iterator(data_ + size_);
 		}
 
 		/**
@@ -250,17 +250,17 @@ namespace fdt {
 		 */
 		constexpr const_iterator cend() const noexcept
 		{
-			return iterator(_data + _size);
+			return iterator(data_ + size_);
 		}
 
 		/**
 		 * @brief Returns a reverse iterator to the beginning of the vector.
 		 * @return constexpr reverse_iterator value to the start of the vector.
 		 */
-		constexpr reverse_iterator rbegin() { return reverse_iterator(_data + _size - 1); }
+		constexpr reverse_iterator rbegin() { return reverse_iterator(data_ + size_ - 1); }
 		constexpr const_reverse_iterator rbegin() const noexcept
 		{
-			return reverse_iterator(_data + _size - 1);
+			return reverse_iterator(data_ + size_ - 1);
 		}
 
 		/**
@@ -271,17 +271,17 @@ namespace fdt {
 		 */
 		constexpr const_reverse_iterator crbegin() const noexcept
 		{
-			return reverse_iterator(_data + _size - 1);
+			return reverse_iterator(data_ + size_ - 1);
 		}
 
 		/**
 		 * @brief Returns a reverse iterator to the end of the vector.
 		 * @return constexpr reverse_iterator value to the end of the vector.
 		 */
-		constexpr reverse_iterator rend() { return reverse_iterator(_data); }
+		constexpr reverse_iterator rend() { return reverse_iterator(data_); }
 		constexpr const_reverse_iterator rend() const noexcept
 		{
-			return reverse_iterator(_data);
+			return reverse_iterator(data_);
 		}
 
 		/**
@@ -291,7 +291,7 @@ namespace fdt {
 		 */
 		constexpr const_reverse_iterator crend() const noexcept
 		{
-			return reverse_iterator(_data);
+			return reverse_iterator(data_);
 		}
 
 		/**
@@ -302,17 +302,17 @@ namespace fdt {
 		 */
 		constexpr void reserve(size_t n)
 		{
-			if (n <= _capacity) return;
-			auto* a = _data;
-			a = allocator_traits::allocate(_alloc, n);
+			if (n <= capacity_) return;
+			auto* a = data_;
+			a = allocator_traits::allocate(alloc_, n);
 
 			// copying vector elements into new buffer
-			std::copy(_data, _data + _size, a);
+			std::copy(data_, data_ + size_, a);
 
 			// de-allocating old buffer
-			allocator_traits::deallocate(_alloc, _data, _capacity);
-			_capacity = n;
-			_data = a;
+			allocator_traits::deallocate(alloc_, data_, capacity_);
+			capacity_ = n;
+			data_ = a;
 		}
 
 		/**
@@ -324,13 +324,13 @@ namespace fdt {
 		 */
 		constexpr void resize(size_t n)
 		{
-			if (n <= _size) {
-				_size = n;
+			if (n <= size_) {
+				size_ = n;
 				return;
 			}
 
 			reserve(n * 2);
-			_size = n;
+			size_ = n;
 		}
 
 		/**
@@ -342,15 +342,15 @@ namespace fdt {
 		 */
 		constexpr void shrink_to_fit()
 		{
-			if (_size == _capacity) return;
-			auto* a = _data;
+			if (size_ == capacity_) return;
+			auto* a = data_;
 
-			a = allocator_traits::allocate(_alloc, _size);
-			std::copy(_data, _data + _size, a);
+			a = allocator_traits::allocate(alloc_, size_);
+			std::copy(data_, data_ + size_, a);
 
-			allocator_traits::deallocate(_alloc, _data, _capacity);
-			_capacity = _size;
-			_data = a;
+			allocator_traits::deallocate(alloc_, data_, capacity_);
+			capacity_ = size_;
+			data_ = a;
 		}
 
 		/**
@@ -359,13 +359,13 @@ namespace fdt {
 		 */
 		constexpr void push_back(const Ty& value)
 		{
-			if (_size + 1 < _capacity) {
-				_size++;
-				allocator_traits::construct(_alloc, _data + _size - 1, value);
+			if (size_ + 1 < capacity_) {
+				size_++;
+				allocator_traits::construct(alloc_, data_ + size_ - 1, value);
 			} else {
-				reserve(_capacity * 2);
-				_size++;
-				allocator_traits::construct(_alloc, _data + _size - 1, value);
+				reserve(capacity_ * 2);
+				size_++;
+				allocator_traits::construct(alloc_, data_ + size_ - 1, value);
 			}
 		}
 
@@ -378,17 +378,17 @@ namespace fdt {
 		template <typename... Args>
 		constexpr reference emplace_back(Args&&... args)
 		{
-			if (_size + 1 < _capacity) {
-				_size++;
-				allocator_traits::construct(_alloc, _data + _size - 1, 
+			if (size_ + 1 < capacity_) {
+				size_++;
+				allocator_traits::construct(alloc_, data_ + size_ - 1, 
 					std::forward<Args>(args)...);
-				return *(_data + _size - 1);
+				return *(data_ + size_ - 1);
 			} else {
-				reserve(_capacity * 2);
-				_size++;
-				allocator_traits::construct(_alloc, _data + _size - 1,
+				reserve(capacity_ * 2);
+				size_++;
+				allocator_traits::construct(alloc_, data_ + size_ - 1,
 					std::forward<Args>(args)...);
-				return *(_data + _size - 1);
+				return *(data_ + size_ - 1);
 			}
 		}
 
@@ -398,7 +398,8 @@ namespace fdt {
 		 */
 		constexpr void pop_back()
 		{
-			_size--;
+			if (size_ == 0) return;
+			size_--;
 		}
 
 		/**
@@ -408,20 +409,26 @@ namespace fdt {
 		 */
 		constexpr void swap(vector& other) noexcept
 		{
-			std::swap(other._data, _data);
-			std::swap(other._capacity, _capacity);
-			std::swap(other._size, _size);
-			std::swap(other._alloc, _alloc);
+			std::swap(other.data_, data_);
+			std::swap(other.capacity_, capacity_);
+			std::swap(other.size_, size_);
+			std::swap(other.alloc_, alloc_);
 		}
 
 	private:
 		using allocator_traits = std::allocator_traits<Allocator>;
-		const size_type _def_alloc = 8;
-		Ty* _data = nullptr;
-		size_type _size;
-		size_type _capacity;
-		allocator_type _alloc;
+		const size_type def_alloc_ = 8;
+		Ty* data_ = nullptr;
+		size_type size_;
+		size_type capacity_;
+		allocator_type alloc_;
 	};
+
+	template <typename Ty>
+	constexpr void swap(vector<Ty>& l, vector<Ty>& r)
+	{
+		l.swap(r);
+	}
 
 	/**
 	 * @brief Lexicographically compares the values of two different vectors

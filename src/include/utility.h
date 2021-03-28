@@ -121,25 +121,28 @@ namespace fdt {
 	template <std::size_t I, typename Tx, typename Ty>
 	constexpr auto& get(pair<Tx, Ty>& p)
 	{
-		static_assert(I < 2);
-		if constexpr (I == 0) return p.first;
-		if constexpr (I == 1) return p.second;
+		if constexpr (I < 2) {
+			if constexpr (I == 0) return p.first;
+			if constexpr (I == 1) return p.second;
+		}
 	}
 
 	template <std::size_t I, typename Tx, typename Ty>
 	constexpr const auto& get(const pair<Tx, Ty>& p)
 	{
-		static_assert(I < 2);
-		if constexpr (I == 0) return p.first;
-		if constexpr (I == 1) return p.second;
+		if constexpr (I < 2) {
+			if constexpr (I == 0) return p.first;
+			if constexpr (I == 1) return p.second;
+		}
 	}
 
 	template <std::size_t I, typename Tx, typename Ty>
 	constexpr auto get(pair<Tx, Ty>&& p)
 	{
-		static_assert(I < 2);
-		if constexpr (I == 0) return p.first;
-		if constexpr (I == 1) return p.second;
+		if constexpr (I < 2) {
+			if constexpr (I == 0) return p.first;
+			if constexpr (I == 1) return p.second;
+		}
 	}
 
 	/**
