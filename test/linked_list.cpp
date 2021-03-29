@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "sequential/linked_list.h"
+#include "sequential/list.h"
 #include <array>
 
 TEST(linked_list, construct_default)

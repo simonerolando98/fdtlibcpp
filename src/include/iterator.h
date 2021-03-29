@@ -137,68 +137,80 @@ namespace fdt {
     template <typename TyNode>
     class forward_list_iterator {
     public:
-        constexpr forward_list_iterator(TyNode* node) : _node(node) {}
-        constexpr forward_list_iterator(const TyNode* node) : _node(const_cast<TyNode*>(node)) {}
-        constexpr forward_list_iterator(std::nullptr_t) : _node(nullptr) {}
+        constexpr forward_list_iterator(TyNode* node) : node_(node) {}
+        constexpr forward_list_iterator(const TyNode* node) : node_(const_cast<TyNode*>(node)) {}
+        constexpr forward_list_iterator(std::nullptr_t) : node_(nullptr) {}
 
-        constexpr void operator++() { _node = _node->_next; }
-        constexpr void operator++(int) { _node = _node->_next; }
+        constexpr void operator++() { node_ = node_->next_; }
+        constexpr void operator++(int) { node_ = node_->next_; }
 
         constexpr bool operator!=(const forward_list_iterator& other) const
         {
-            return _node != other._node;
+            return node_ != other.node_;
         }
 
         constexpr bool operator==(const forward_list_iterator& other) const
         {
-            return _node == other._node;
+            return node_ == other.node_;
         }
 
         constexpr bool operator>(const forward_list_iterator& other) const
         {
-            return (_node - other._node) > 0;
+            return (node_ - other.node_) > 0;
         }
 
         constexpr bool operator<(const forward_list_iterator& other) const
         {
-            return (_node - other._node) < 0;
+            return (node_ - other.node_) < 0;
         }
 
         constexpr bool operator>=(const forward_list_iterator& other) const
         {
-            return (_node - other._node) >= 0;
+            return (node_ - other.node_) >= 0;
         }
 
         constexpr bool operator<=(const forward_list_iterator& other) const
         {
-            return (_node - other._node) <= 0;
+            return (node_ - other.node_) <= 0;
         }
 
         constexpr typename TyNode::value_type operator*()
         {
-            return _node->_data;
+            return node_->data_;
         }
 
         constexpr typename TyNode::value_type operator*() const
         {
-            return _node->_data;
+            return node_->data_;
         }
 
         forward_list_iterator operator+(size_t p)
         {
             auto iter = *this;
             for (size_t i = 0; i < p; ++i) {
-                if (iter._node) iter++;
+                if (iter.node_) iter++;
                 else break;
             }
             return iter;
         }
-        ;
-        constexpr bool operator==(std::nullptr_t) const { return _node == nullptr; }
-        constexpr bool operator!=(std::nullptr_t) const { return _node != nullptr; }
+
+        constexpr bool operator==(std::nullptr_t) const { return node_ == nullptr; }
+        constexpr bool operator!=(std::nullptr_t) const { return node_ != nullptr; }
     private:
-        TyNode* _node;
+        template <typename Ty, typename Allocator>
+        friend class forward_list<Ty, Allocator>;
+        
+        TyNode* node_;
     };
+
+    template <typename TyNode>
+    constexpr std::ptrdiff_t distance(forward_list_iterator<TyNode> begin,
+                                        forward_list_iterator<TyNode> end)
+	{
+		ptrdiff_t dist = 0;
+        for (auto it = begin; it != end; ++it) dist++;
+        return dist;
+	}
 
     template <typename TyNode>
     class list_iterator {
