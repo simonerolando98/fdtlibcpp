@@ -43,43 +43,42 @@ namespace fdt {
 		using const_iterator = const forward_list_iterator<fwd_list_node<Ty>>;
 
 		constexpr forward_list()
-			: start_(nullptr), before_start_(nullptr), before_begin_(nullptr)
 		{
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 		}
 		
-		constexpr explicit forward_list(size_type n)
-			: start_(nullptr), before_start_(nullptr), before_begin_(nullptr)
+		constexpr explicit forward_list(size_t n)
 		{
 			for (size_t i = 0; i < n; ++i) emplace_front();
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 		}
 
-		constexpr explicit forward_list(size_type n, const Ty& val)
-			: start_(nullptr)
+		constexpr explicit forward_list(size_t n, const Ty& val)
 		{
 			for (size_t i = 0; i < n; ++i) push_front(val);
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 		}
 
 		constexpr forward_list(const forward_list& fwdlist)
 		{
-			for (const auto& x : fwdlist) push_back(x);
-			before_start_->next = start_;
+			for (auto it = fwdlist.begin(); it != fwdlist.end(); ++it)
+				emplace_back(*it);
+			before_start_->next_ = start_;
 		}
 
 		constexpr forward_list(forward_list&& fwdlist)
 			: start_(std::move(fwdlist.start_))
 		{
-			before_start_->next = start_;
+			fwdlist.start_ = nullptr;
+			fwdlist.before_start_->next_ = nullptr;
+			before_start_->next_ = start_;
 		}
 
 		constexpr forward_list(std::initializer_list<Ty> ilist)
-			: start_(nullptr)
 		{
 			for (auto it = std::rbegin(ilist); it != std::rend(ilist); ++it)
 				emplace_front(*it);
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 		}
 
 		constexpr forward_list& operator=(const forward_list& fwdlist)
@@ -127,12 +126,12 @@ namespace fdt {
 			if (is_null(start_)) {
 				start_ = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, start_, val);
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			} else {
 				auto n = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, n, val, start_);
 				start_ = n;
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			}
 		}
 
@@ -141,12 +140,12 @@ namespace fdt {
 			if (is_null(start_)) {
 				start_ = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, start_, std::move(val));
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			} else {
 				auto n = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, n, std::move(val), start_);
 				start_ = n;
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			}
 		}
 
@@ -157,13 +156,13 @@ namespace fdt {
 				start_ = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, start_,
 					std::forward<Args>(args)...);
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			} else {
 				auto n = allocator_traits::allocate(alloc_, 1);
 				allocator_traits::construct(alloc_, n,
 					std::forward<Args>(args)..., start_);
 				start_ = n;
-				before_start_->next = start_;
+				before_start_->next_ = start_;
 			}
 		}
 
@@ -174,7 +173,7 @@ namespace fdt {
 			auto del = start_;
 			start_ = start_->next_;
 			allocator_traits::deallocate(alloc_, del, 1);
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 		}
 
 		constexpr iterator insert_after(const_iterator pos, const Ty& val)
@@ -183,7 +182,7 @@ namespace fdt {
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, val, ins_pos);
 			pos.node_->next_ = n;
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
@@ -193,17 +192,17 @@ namespace fdt {
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, std::move(val), ins_pos);
 			pos.node_->next_ = n;
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
 		constexpr iterator
-		insert_after(const_iterator pos, size_type count, const Ty& val)
+		insert_after(const_iterator pos, size_t count, const Ty& val)
 		{
 			if (count == 0) return pos;
 			iterator it;
 			for (size_t i = 0; i < count; ++i) it = insert_after(pos + i, val);
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return it;
 		}
 
@@ -213,12 +212,12 @@ namespace fdt {
 		{
 			if (first == last) return pos;
 			iterator it = pos;
-			iterator ret;
-			for (auto iit = first; first != last; ++iit) {
+			iterator ret = nullptr;
+			for (auto iit = first; iit != last; ++iit) {
 				ret = insert_after(it, *iit);
 				++it;
 			}
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return ret;
 		}
 
@@ -227,12 +226,12 @@ namespace fdt {
 		{
 			if (ilist.begin() == ilist.end()) return pos;
 			size_t i = 0;
-			iterator ret;
+			iterator ret = nullptr;
 			for (const auto& x : ilist) {
 				ret = insert_after(pos + i, x);
 				++i;
 			}
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return ret;
 		}
 
@@ -244,7 +243,7 @@ namespace fdt {
 			allocator_traits::construct(alloc_, n,
 				std::forward<Args>(args)..., ins_pos);
 			pos.node_->next_ = n;
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
@@ -252,19 +251,33 @@ namespace fdt {
 		{
 			auto del = pos.node_->next_;
 			auto node = pos.node_;
-			node->next_ = del->_next;
+			node->next_ = del->next_;
 			allocator_traits::deallocate(alloc_, del, 1);
-			before_start_->next = start_;
+			before_start_->next_ = start_;
 			return iterator(node->next_);
 		}
 
 		constexpr iterator
 		erase_after(const_iterator first, const_iterator last)
 		{
-			auto it = first;
-			for (; it != last; ++it) erase_after(it);
-			before_start_->next = start_;
-			return last;
+			auto dist = distance(first, last);
+			iterator it = nullptr;
+			for (size_t i = 0; i < dist; ++i)
+				it = erase_after(first);
+			return it;
+		}
+
+		constexpr void clear() noexcept
+		{
+			if (is_null(start_)) return;
+			auto cp = start_;
+			auto del = start_;
+
+			while (!is_null(cp->next_)) {
+				del = cp;
+				cp = cp->next_;
+				allocator_traits::deallocate(alloc_, del, 1);
+			}
 		}
 
 		constexpr iterator begin() noexcept
@@ -313,27 +326,24 @@ namespace fdt {
 		}
 
 	private:
-		constexpr void push_back(const Ty& val)
+		template <typename... Args>
+		constexpr void emplace_back(Args&&... args)
 		{
+			if (is_null(start_))
+				return emplace_front(std::forward<Args>(args)...);
 			auto cp = start_;
-			for (;!is_null(cp->next_); cp = cp->next_);
+			while (!is_null(cp->next_)) cp = cp->next_;
 			cp->next_ = allocator_traits::allocate(alloc_, 1);
-			allocator_traits::construct(alloc_, cp->next_, val);
-		}
-
-		constexpr void push_back(Ty&& val)
-		{
-			auto cp = start_;
-			for (;!is_null(cp->next_); cp = cp->next_);
-			cp->next_ = allocator_traits::allocate(alloc_, 1);
-			allocator_traits::construct(alloc_, cp->next_, std::move(val));
+			allocator_traits::construct(alloc_, cp->next_,
+				std::forward<Args>(args)...);
 		}
 
 		using allocator_traits = std::allocator_traits<Allocator>;
 		using list_type = fwd_list_node<Ty>*;
 
-		list_type start_;
+		list_type start_ = nullptr;
 		list_type before_start_ = allocator_traits::allocate(alloc_, 1);
+		allocator_type alloc_;
 	};
 }
 

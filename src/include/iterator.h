@@ -184,24 +184,21 @@ namespace fdt {
             return node_->data_;
         }
 
-        forward_list_iterator operator+(size_t p)
-        {
-            auto iter = *this;
-            for (size_t i = 0; i < p; ++i) {
-                if (iter.node_) iter++;
-                else break;
-            }
-            return iter;
-        }
-
         constexpr bool operator==(std::nullptr_t) const { return node_ == nullptr; }
         constexpr bool operator!=(std::nullptr_t) const { return node_ != nullptr; }
     private:
         template <typename Ty, typename Allocator>
-        friend class forward_list<Ty, Allocator>;
-        
+        friend class forward_list;
         TyNode* node_;
     };
+
+    template <typename TyNode>
+    constexpr forward_list_iterator<TyNode>
+    operator+(forward_list_iterator<TyNode> it, size_t pos)
+    {
+        for (size_t i = 0; i < pos; ++i) ++it;
+        return it;
+    }
 
     template <typename TyNode>
     constexpr std::ptrdiff_t distance(forward_list_iterator<TyNode> begin,
