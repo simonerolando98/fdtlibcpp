@@ -3,6 +3,7 @@
 
 #include <fdt/iterator.h>
 #include <memory>
+#include <algorithm>
 
 namespace fdt {
 	template<typename T, typename Allocator = std::allocator<T>>
@@ -18,14 +19,110 @@ namespace fdt {
 		using const_pointer = const T*;
 		using iterator = rand_iterator<T>;
 		using const_iterator = const rand_iterator<T>;
+
 	private:
 		allocator_type va;
 		using va_traits = std::allocator_traits<Allocator>;
-		
+
 		pointer* ab;
 		pointer* cb;
 		pointer* ae;
 		pointer* ce;
+
+	public:
+		deque() = default;
+
+		constexpr deque(size_t count, const T& value)
+			: va(Allocator()), ab(new pointer[count << 1]),
+				cb(ab + (count >> 1)), ae(ab + (count << 1)), ce(cb + count)
+		{
+			std::for_each(cb, ce, [&](pointer& p) {
+				p = va_traits::allocate(va, 1);
+				va_traits::construct(va, p, value);
+			});
+		}
+
+		template<typename InputIter>
+		constexpr deque(InputIter first, InputIter last)
+			: va(Allocator())
+		{
+			for (auto it = first; first != last; ++it)
+				push_back(*it);
+		}
+
+		constexpr deque(const deque& other)
+			: va(other.va), ab(new pointer[other.size() << 1]),
+				cb(ab + (other.size() >> 1)), ae(ab + (other.size() << 1)),
+				ce(cb + other.size())
+		{
+			std::for_each(cb, ce, [&](pointer& p) {
+				p = va_traits::allocate(va, 1);
+				va_traits::construct(va, p, other[&p - cb]);
+			});
+		}
+
+		constexpr deque(deque&& other) noexcept
+			: va(std::move(other.va)), ab(other.ab), cb(other.cb),
+				ae(other.ae), ce(other.ce)
+		{
+			other.ab = nullptr;
+			other.cb = nullptr;
+			other.ae = nullptr;
+			other.ce = nullptr;
+		}
+
+		constexpr deque(std::initializer_list<T> ilist)
+			: va(Allocator()), ab(new pointer[ilist.size() << 1]),
+				cb(ab + (ilist.size() >> 1)), ae(ab + (ilist.size() << 1)),
+				ce(cb + ilist.size())
+		{
+			std::for_each(cb, ce, [&](pointer& p) {
+				p = va_traits::allocate(va, 1);
+				va_traits::construct(va, p, std::move(ilist.begin()[&p - cb]));
+			});
+		}
+
+		~deque()
+		{
+			clear();
+			delete[] ab;
+		}
+
+		constexpr deque& operator=(const deque& other)
+		{
+			if (&other != this) {
+				deque copy(other);
+				copy.swap(*this);
+				return *this;
+			}
+
+			return *this;
+		}
+
+		constexpr deque& operator=(deque&& other)
+		{
+			if (&other != this) {
+				deque copy(std::move(other));
+				copy.swap(*this);
+				return *this;
+			}
+
+			return *this;
+		}
+
+		constexpr deque& operator=(std::initializer_list<T> other)
+		{
+			deque copy(other);
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr void assign(size_t count, const T& value)
+		{
+			if (count <= size()) {
+				
+			}
+		}
 	};
 }
 

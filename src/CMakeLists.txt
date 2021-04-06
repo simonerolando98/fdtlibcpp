@@ -1,0 +1,9 @@
+set(LIBNAME fdtlibcpp_lib)
+
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h")
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
+
+add_library(${LIBNAME} STATIC ${SOURCES})
+
+set_target_properties(${LIBNAME} PROPERTIES LINKER_LANGUAGE CXX) 

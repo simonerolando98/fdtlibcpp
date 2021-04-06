@@ -14,27 +14,27 @@ namespace fdt {
      * @brief Implementation of a template matrix class.
      * An allocator could be provided as defaulted template
      * parameter.
-     * @tparam Ty type of the contaner.
+     * @tparam T type of the container.
      * @tparam Rows Number of rows.
      * @tparam Cols Number of columns.
      * @tparam Allocator allocator.
      */
-    template <typename Ty,
+    template <typename T,
             std::size_t Rows, std::size_t Cols,
-            class Allocator = std::allocator<Ty>>
+            class Allocator = std::allocator<T>>
     class matrix {
     public:
-        using value_type = Ty;
+        using value_type = T;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
-        using reference = Ty&;
-        using const_reference = const Ty&;
-        using pointer = Ty*;
-        using const_pointer = const Ty*;
-        using iterator = fdt::rand_iterator<Ty>;
-        using const_iterator = const fdt::rand_iterator<Ty>;
-        using reverse_iterator = reverse_rand_iterator<Ty>;
-        using const_reverse_iterator = const reverse_rand_iterator<Ty>;
+        using reference = T&;
+        using const_reference = const T&;
+        using pointer = T*;
+        using const_pointer = const T*;
+        using iterator = fdt::rand_iterator<T>;
+        using const_iterator = const fdt::rand_iterator<T>;
+        using reverse_iterator = reverse_rand_iterator<T>;
+        using const_reverse_iterator = const reverse_rand_iterator<T>;
         using allocator_type = Allocator;
 
         /**
@@ -49,7 +49,7 @@ namespace fdt {
          * @param init std::initializer_list<Ty> containing matrix
          * values.
          */
-        constexpr matrix(const std::initializer_list<Ty> init)
+        constexpr matrix(std::initializer_list<T> init)
         {
             _data = allocator_traits::allocate(_alloc, Rows * Cols);
             if (init.size() == Rows * Cols) {
@@ -97,7 +97,7 @@ namespace fdt {
          * Fills the matrix with a given value.
          * @param val a value of type matrix::value_type.
          */
-        constexpr void fill(const Ty& val)
+        constexpr void fill(const T& val)
         {
             std::fill_n(_data, Rows * Cols, val);
         }
@@ -203,7 +203,7 @@ namespace fdt {
             return _data[Cols * row + col];
         }
 
-        constexpr void swap(matrix& other)
+        constexpr void swap(matrix& other) noexcept
         {
             std::swap(other._data, _data);
             std::swap(other._alloc, _alloc);
@@ -214,7 +214,7 @@ namespace fdt {
          * by using the iterative method.
          * @return double determinant value.
          */
-        double determinant() const noexcept
+        double determinant() const
         {
             if (Rows != Cols)
                 throw matrix_non_square("determinant is not defined"
@@ -231,7 +231,7 @@ namespace fdt {
 
             // copying matrix with cast
             std::transform(_data, _data + Rows * Cols, mat,
-                           [](Ty x) { return static_cast<double>(x); });
+                           [](T x) { return static_cast<double>(x); });
             auto det = 1.0;
 
             // Row operations for i = 0, ..., n - 2
@@ -279,7 +279,7 @@ namespace fdt {
          */
         constexpr auto transpose() const
         {
-            matrix<Ty, Cols, Rows> mat;
+            matrix<T, Cols, Rows> mat;
             for (size_t i = 0; i < Rows; ++i)
                 for (size_t j = 0; j < Cols; ++j)
                     mat(j, i) = this->operator()(i, j);
@@ -288,20 +288,31 @@ namespace fdt {
 
         constexpr matrix& operator=(const matrix& other)
         {
+            if (&other == this) return *this;
+        	
             matrix copy(other);
             copy.swap(*this);
             return *this;
         }
 
-        constexpr matrix& operator=(matrix&& other)
+        constexpr matrix& operator=(matrix&& other) noexcept
         {
+            if (&other == this) return *this;
+        	
             matrix copy(std::move(other));
+            copy.swap(*this);
+            return *this;
+        }
+
+		constexpr matrix& operator=(std::initializer_list<T> init)
+        {
+            matrix copy(init);
             copy.swap(*this);
             return *this;
         }
     private:
         allocator_type _alloc;
-        Ty* _data;
+        T* _data;
         using allocator_traits = std::allocator_traits<Allocator>;
     };
 

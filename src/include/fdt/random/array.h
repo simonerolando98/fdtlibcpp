@@ -14,20 +14,20 @@ namespace fdt {
 	 * @brief Static array container. Provides safe access to a standard
 	 * stack allocated static array. Size is provided as a template parameter
 	 * and is, therefore, part of the type.
-	 * @tparam Ty type of the container.
+	 * @tparam T type of the container.
 	*/
-	template <typename Ty, std::size_t Size>
+	template <typename T, std::size_t Size>
 	class array {
 	public:
-		using value_type = Ty;
-		using reference = Ty&;
-		using const_reference = const Ty&;
-		using pointer = Ty*;
-		using const_pointer = const Ty*;
-		using iterator = rand_iterator<Ty>;
-		using const_iterator = rand_iterator<Ty>;
-		using reverse_iterator = reverse_rand_iterator<Ty>;
-		using const_reverse_iterator = const reverse_rand_iterator<Ty>;
+		using value_type = T;
+		using reference = T&;
+		using const_reference = const T&;
+		using pointer = T*;
+		using const_pointer = const T*;
+		using iterator = rand_iterator<T>;
+		using const_iterator = rand_iterator<T>;
+		using reverse_iterator = reverse_rand_iterator<T>;
+		using const_reverse_iterator = const reverse_rand_iterator<T>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 
@@ -48,15 +48,15 @@ namespace fdt {
 		 * @brief Copies another instance of array using move semantics.
 		 * @param other another array instance
 		*/
-		constexpr array(array&& other) : _data(std::move(other._data)) {}
+		constexpr array(array&& other) noexcept : _data(std::move(other._data)) {}
 
 		/**
 		 * @brief Initializes the array using an std::initializer_list constructor.
-		 * @param ilist initializer list with array elements.
+		 * @param init initializer list with array elements.
 		*/
-		constexpr array(const std::initializer_list<Ty>& ilist)
+		constexpr array(const std::initializer_list<T>& init)
 		{
-			std::copy(ilist.begin(), ilist.end(), _data);
+			std::copy(init.begin(), init.end(), _data);
 		}
 
 		/**
@@ -206,7 +206,7 @@ namespace fdt {
 		 * @brief Fills the array with the given value.
 		 * @param value used to fill the array.
 		*/
-		constexpr void fill(const Ty& value)
+		constexpr void fill(const T& value)
 		{
 			std::fill_n(_data, Size, value);
 		}
@@ -215,27 +215,38 @@ namespace fdt {
 		 * @brief Swaps the array content with another array instance.
 		 * @param other another array instance.
 		*/
-		constexpr void swap(array& other)
+		constexpr void swap(array& other) noexcept
 		{
 			std::swap(other._data, _data);
 		}
 
 		constexpr array& operator=(const array& other)
 		{
+			if (&other == this) return *this;
+			
 			array copy(other);
 			copy.swap(*this);
 			return *this;
 		}
 
-		constexpr array& operator=(array&& other)
+		constexpr array& operator=(array&& other) noexcept
 		{
+			if (&other == this) return *this;
+			
 			array copy(std::move(other));
 			copy.swap(*this);
 			return *this;
 		}
 
+		constexpr array& operator=(std::initializer_list<T> init)
+		{
+			array copy(init);
+			copy.swap(*this);
+			return *this;
+		}
+
 	private:
-		Ty _data[Size];
+		T _data[Size];
 	};
 
 	template <typename Ty, std::size_t N>

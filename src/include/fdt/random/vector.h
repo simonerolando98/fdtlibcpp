@@ -8,18 +8,18 @@
 #include <fdt/exception.h>
 
 namespace fdt {
-	template <typename Ty, class Allocator = std::allocator<Ty> >
+	template <typename T, class Allocator = std::allocator<T> >
 	class vector {
 	public:
-		using value_type = Ty;
-		using reference = Ty&;
-		using const_reference = const Ty&;
-		using pointer = Ty*;
-		using const_pointer = const Ty*;
-		using iterator = rand_iterator<Ty>;
-		using const_iterator = const rand_iterator<Ty>;
-		using reverse_iterator = reverse_rand_iterator<Ty>;
-		using const_reverse_iterator = const reverse_rand_iterator<Ty>;
+		using value_type = T;
+		using reference = T&;
+		using const_reference = const T&;
+		using pointer = T*;
+		using const_pointer = const T*;
+		using iterator = rand_iterator<T>;
+		using const_iterator = const rand_iterator<T>;
+		using reverse_iterator = reverse_rand_iterator<T>;
+		using const_reverse_iterator = const reverse_rand_iterator<T>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 		using allocator_type = Allocator;
@@ -70,7 +70,7 @@ namespace fdt {
 		 * be preserved. The complexity of this constructor is constant.
 		 * 
 		 */
-		constexpr vector(vector&& other)
+		constexpr vector(vector&& other) noexcept
 			: data_(std::move(other.data_)),
 			size_(other.size_), capacity_(other.capacity_)
 		{
@@ -87,14 +87,14 @@ namespace fdt {
 		 * vector. The complexity of this constructor is linear in
 		 * length of the initializer list.
 		 */
-		constexpr vector(const std::initializer_list<Ty>& ilist)
-			: data_(allocator_traits::allocate(alloc_, def_alloc_ + ilist.size())),
-			size_(ilist.size()), capacity_(def_alloc_ + ilist.size())
+		constexpr vector(std::initializer_list<T> init)
+			: data_(allocator_traits::allocate(alloc_, def_alloc_ + init.size())),
+			size_(init.size()), capacity_(def_alloc_ + init.size())
 		{
 
-			for (size_t i = 0; i < ilist.size(); ++i)
+			for (size_t i = 0; i < init.size(); ++i)
 				allocator_traits::construct(alloc_, data_ + i,
-					*(ilist.begin() + i));
+					*(init.begin() + i));
 		}
 
 		/**
@@ -107,6 +107,8 @@ namespace fdt {
 		 */
 		constexpr vector& operator=(const vector& other)
 		{
+			if (&other == this) return *this;
+			
 			vector copy(other);
 			copy.swap(*this);
 			return *this;
@@ -117,14 +119,23 @@ namespace fdt {
 		 * semantics. The pointer to the unerlying data structure is moved
 		 * and the other object is reset to an empty state. The complexity
 		 * of this operator call is constant.
-		 * @param other 
+		 * @param other reference to a temporary rvalue vector.
 		 * @return constexpr reference 
 		 */
-		constexpr vector& operator=(vector&& other)
+		constexpr vector& operator=(vector&& other) noexcept
 		{
+			if (&other == this) return *this;
+			
 			vector copy(std::move(other));
 			copy.swap(*this);
 			return *this;
+		}
+
+		constexpr vector& operator=(std::initializer_list<T> init)
+		{
+			vector copy(init);
+			copy.swap(*this);
+			return *this; 
 		}
 
 		~vector()
@@ -357,7 +368,7 @@ namespace fdt {
 		 * @brief Adds an element of the given value to the end of the vector.
 		 * @param value element to add to the end of the vector.
 		 */
-		constexpr void push_back(const Ty& value)
+		constexpr void push_back(const T& value)
 		{
 			if (size_ + 1 < capacity_) {
 				size_++;
@@ -418,7 +429,7 @@ namespace fdt {
 	private:
 		using allocator_traits = std::allocator_traits<Allocator>;
 		const size_type def_alloc_ = 8;
-		Ty* data_ = nullptr;
+		T* data_ = nullptr;
 		size_type size_;
 		size_type capacity_;
 		allocator_type alloc_;

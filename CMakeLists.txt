@@ -18,4 +18,5 @@ endif()
 include_directories(src/include)
 
 add_subdirectory(test)
+add_subdirectory(src)
 add_subdirectory(lib/googletest)
