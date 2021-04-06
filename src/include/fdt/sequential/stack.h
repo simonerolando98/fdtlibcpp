@@ -1,7 +1,7 @@
 #ifndef FDT_SEQUENTIAL_STACK_H
 #define FDT_SEQUENTIAL_STACK_H
 
-#include "random/vector.h"
+#include <fdt/random/vector.h>
 
 namespace fdt {
     /**

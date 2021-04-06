@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "random/matrix.h"
+#include <fdt/random/matrix.h>
 
 TEST(matrix, construct_destruct_default)
 {

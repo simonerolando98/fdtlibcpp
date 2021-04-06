@@ -1,6 +1,6 @@
 #include <string>
 #include "gtest/gtest.h"
-#include "utility.h"
+#include <fdt/utility.h>
 
 TEST(pair, make)
 {

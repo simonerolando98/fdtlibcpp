@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
-#include "utility.h"
-#include "iterator.h"
+#include <fdt/utility.h>
+#include <fdt/iterator.h>
 
 namespace fdt {
 	template <typename Tx>
@@ -262,7 +262,7 @@ namespace fdt {
 		{
 			auto dist = distance(first, last);
 			iterator it = nullptr;
-			for (size_t i = 0; i < dist; ++i)
+			for (ptrdiff_t i = 0; i < dist; ++i)
 				it = erase_after(first);
 			return it;
 		}

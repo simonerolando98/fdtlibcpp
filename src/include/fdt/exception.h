@@ -1,7 +1,3 @@
-//
-// Created by Simone Rolando on 19/03/21.
-//
-
 #ifndef FDTLIBCPP_EXCEPTION_H
 #define FDTLIBCPP_EXCEPTION_H
 

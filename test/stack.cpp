@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "sequential/stack.h"
+#include <fdt/sequential/stack.h>
 #include <string>
 
 TEST(stack, construct_default)

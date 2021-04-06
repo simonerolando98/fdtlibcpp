@@ -5,8 +5,8 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "utility.h"
-#include "iterator.h"
+#include <fdt/utility.h>
+#include <fdt/iterator.h>
 
 namespace fdt {
 

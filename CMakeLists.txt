@@ -3,10 +3,8 @@ project(fdtlibcpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -g -march=i386")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-
-set(CMAKE_BUILD_TYPE Debug)
 
 # MSVC Static Multi Threaded Debug
 if (MSVC)
