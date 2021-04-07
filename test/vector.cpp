@@ -128,12 +128,11 @@ TEST(vector, resize)
         "Andrea",
         "Simone"
     });
-    const auto init_capacity = strs.capacity();
     strs.emplace_back("Elisabetta");
     ASSERT_EQ(5, strs.size());
     strs.resize(2);
     ASSERT_EQ(2, strs.size());
-    ASSERT_EQ(init_capacity, strs.capacity());
+    ASSERT_EQ(8, strs.capacity());
     (void)strs;
 }
 

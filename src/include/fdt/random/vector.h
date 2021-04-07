@@ -312,8 +312,8 @@ namespace fdt {
 			auto* a = data_;
 			a = allocator_traits::allocate(alloc_, n);
 
-			// copying vector elements into new buffer
-			std::copy(data_, data_ + size_, a);
+			for (size_t i = 0; i < size_; ++i)
+				allocator_traits::construct(alloc_, a + i, *(data_ + i));
 
 			// de-allocating old buffer
 			allocator_traits::deallocate(alloc_, data_, capacity_);

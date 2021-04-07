@@ -255,7 +255,10 @@ namespace fdt {
                 // Row operations to calculate upper-triangular
                 const double pivot = mat[N * i + i];
                 // Singular matrix
-                if (std::abs(pivot) < SMALL) return 0.0;
+                if (std::abs(pivot) < SMALL) {
+                    alloc_traits::deallocate(alloc, mat, N * N);
+                    return 0.0;
+                }
 
                 // On lower rows
                 for (size_t s = i + 1; s < N; ++s) {

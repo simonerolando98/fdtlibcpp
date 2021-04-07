@@ -3,7 +3,7 @@ project(fdtlibcpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -g")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -g -fsanitize=address")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 # MSVC Static Multi Threaded Debug
@@ -21,4 +21,5 @@ include_directories(src/include)
 
 add_subdirectory(test)
 add_subdirectory(src)
+add_subdirectory(examples)
 add_subdirectory(lib/googletest)

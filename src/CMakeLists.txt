@@ -1,4 +1,4 @@
-set(LIBNAME fdtlibcpp_lib)
+set(LIBNAME fdtlibcpp)
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h")
 

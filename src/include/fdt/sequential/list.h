@@ -294,14 +294,16 @@ namespace fdt {
         {
             if (is_null(_list_start)) return;
 
-            auto list = _list_start;
-            while (!is_null(list->_next)) {
-                auto del = list;
-                list = list->_next;
-                delete del;
-            }
-            _list_start = nullptr;
-            _size = 0;
+			dl_node<Ty>* curr = _list_start;
+			dl_node<Ty>* next = nullptr;
+
+			while (!is_null(curr)) {
+				next = curr->_next;
+				allocator_traits::deallocate(_alloc, curr, 1);
+				curr = next;
+			}
+
+			_list_start = nullptr;
         }
 
         using _list_type = dl_node<Ty>*;

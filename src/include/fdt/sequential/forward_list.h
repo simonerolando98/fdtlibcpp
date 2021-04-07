@@ -270,14 +270,19 @@ namespace fdt {
 		constexpr void clear() noexcept
 		{
 			if (is_null(start_)) return;
-			auto cp = start_;
-			auto del = start_;
 
-			while (!is_null(cp->next_)) {
-				del = cp;
-				cp = cp->next_;
-				allocator_traits::deallocate(alloc_, del, 1);
+			fwd_list_node<Ty>* curr = start_;
+			fwd_list_node<Ty>* next = nullptr;
+
+			while (!is_null(curr)) {
+				next = curr->next_;
+				allocator_traits::deallocate(alloc_, curr, 1);
+				curr = next;
 			}
+
+			start_ = nullptr;
+			allocator_traits::deallocate(alloc_, before_start_, 1);
+			before_start_ = nullptr;
 		}
 
 		constexpr iterator begin() noexcept
