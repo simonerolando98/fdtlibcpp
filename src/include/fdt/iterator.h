@@ -6,190 +6,204 @@ namespace fdt {
      * @brief Random access iterator class. Provides access to containers
      * using range-based representation to reduce code clutter and potential
      * user error.
-     * @tparam Ty iterator ptr type. 
+     * @tparam T iterator ptr type. 
     */
-    template <typename Ty>
+    template <typename T>
     class rand_iterator {
     public:
-        constexpr rand_iterator() : _iter(nullptr) {}
-        constexpr rand_iterator(Ty* ptr) : _iter(ptr) {}
-        constexpr rand_iterator(const Ty* ptr) : _iter(const_cast<Ty*>(ptr)) {}
-        constexpr rand_iterator(std::nullptr_t) : _iter(nullptr) {}
+        constexpr rand_iterator() : iter_(nullptr) {}
+        constexpr explicit rand_iterator(T* ptr) : iter_(ptr) {}
+        constexpr explicit rand_iterator(const T* ptr) : iter_(const_cast<T*>(ptr)) {}
+        constexpr explicit rand_iterator(std::nullptr_t) : iter_(nullptr) {}
 
-        constexpr void operator++() { _iter++; }
-        constexpr void operator--() { _iter--; }
-        constexpr void operator++(int) { _iter++; }
-        constexpr void operator--(int) { _iter--; }
+        constexpr void operator++() { ++iter_; }
+        constexpr void operator--() { --iter_; }
+        constexpr void operator++(int) { iter_++; }
+        constexpr void operator--(int) { iter_--; }
 
-        [[nodiscard]]
+
         constexpr bool operator==(const rand_iterator& other) const
-        { return _iter == other._iter; }
-        [[nodiscard]]
+        { return iter_ == other.iter_; }
+
         constexpr bool operator!=(const rand_iterator& other) const
-        { return _iter != other._iter; }
+        { return iter_ != other.iter_; }
 
-        [[nodiscard]]
+
         constexpr bool operator>(const rand_iterator& other) const
-        { return ((_iter - other._iter) > 0); }
-        [[nodiscard]]
+        { return ((iter_ - other.iter_) > 0); }
+
         constexpr bool operator<(const rand_iterator& other) const
-        { return ((_iter - other._iter) < 0); }
-        [[nodiscard]]
+        { return ((iter_ - other.iter_) < 0); }
+
         constexpr bool operator>=(const rand_iterator& other) const
-        { return ((_iter - other._iter) >= 0); }
-        [[nodiscard]]
+        { return ((iter_ - other.iter_) >= 0); }
+
         constexpr bool operator<=(const rand_iterator& other) const
-        { return ((_iter - other._iter) <= 0); }
+        { return ((iter_ - other.iter_) <= 0); }
 
-        [[nodiscard]]
-        constexpr auto operator*() { return *_iter; }
-        [[nodiscard]]
-        constexpr auto operator*() const { return *_iter; }
 
-        auto operator+(int p)
+        constexpr T& operator*() noexcept { return *iter_; }
+
+        constexpr const T& operator*() const noexcept { return *iter_; }
+
+        constexpr rand_iterator operator+(size_t p)
         {
-            auto iter = _iter;
-            for (int i = 0; i < p; ++i) {
-                if (iter) ++iter;
-                else break;
-            }
-            return iter;
+            return rand_iterator(iter_ + p);
         }
 
-        constexpr explicit operator Ty*() const { return _iter; }
+        constexpr rand_iterator operator+(int p)
+        {
+            return rand_iterator(iter_ + p);
+        }
+
+        constexpr explicit operator T*() const { return iter_; }
 		constexpr bool operator==(const std::nullptr_t null) const
 		{
-			return _iter == null;
+			return iter_ == null;
 		}
     private:
-        Ty* _iter;
+        T* iter_;
     };
+
 
     /**
      * @brief Reverse random access iterator class. Provides access to
      * sequential containers in reverse order, and allows the usage of
      * range-based semantics in order to minimize user error and code
      * clutter.
-     * @tparam Ty iterator ptr type.
+     * @tparam T iterator ptr type.
     */
-    template <typename Ty>
+    template <typename T>
     class reverse_rand_iterator {
     public:
-        constexpr reverse_rand_iterator() : _iter(nullptr) {}
-        constexpr reverse_rand_iterator(Ty* ptr) : _iter(ptr) {}
-        constexpr reverse_rand_iterator(const Ty* ptr) : _iter(const_cast<Ty*>(ptr)) {}
-        constexpr reverse_rand_iterator(std::nullptr_t) : _iter(nullptr) {}
+        constexpr reverse_rand_iterator() : iter_(nullptr) {}
+        constexpr reverse_rand_iterator(T* ptr) : iter_(ptr) {}
+        constexpr reverse_rand_iterator(const T* ptr) : iter_(const_cast<T*>(ptr)) {}
+        constexpr reverse_rand_iterator(std::nullptr_t) : iter_(nullptr) {}
 
-        constexpr void operator++() { _iter--; }
-        constexpr void operator--() { _iter++; }
-        constexpr void operator++(int) { _iter--; }
-        constexpr void operator--(int) { _iter++; }
+        constexpr void operator++() { --iter_; }
+        constexpr void operator--() { ++iter_; }
+        constexpr void operator++(int) { iter_--; }
+        constexpr void operator--(int) { iter_++; }
 
         constexpr bool operator==(const reverse_rand_iterator& other) const
         {
-            return _iter == other._iter;
+            return iter_ == other.iter_;
         }
 
         constexpr bool operator!=(const reverse_rand_iterator& other) const
         {
-            return _iter != other._iter;
+            return iter_ != other.iter_;
         }
 
 
         constexpr bool operator>(const reverse_rand_iterator& other) const
         {
-            return ((_iter - other._iter) > 0);
+            return ((iter_ - other.iter_) > 0);
         }
 
         constexpr bool operator<(const reverse_rand_iterator& other) const
         {
-            return ((_iter - other._iter) < 0);
+            return ((iter_ - other.iter_) < 0);
         }
 
         constexpr bool operator>=(const reverse_rand_iterator& other) const
         {
-            return ((_iter - other._iter) >= 0);
+            return ((iter_ - other.iter_) >= 0);
         }
 
         constexpr bool operator<=(const reverse_rand_iterator& other) const
         {
-            return ((_iter - other._iter) <= 0);
+            return ((iter_ - other.iter_) <= 0);
         }
 
 
-        constexpr auto operator*() { return *_iter; }
+        constexpr auto operator*() { return *iter_; }
 
-        constexpr auto operator*() const { return *_iter; }
+        constexpr auto operator*() const { return *iter_; }
 
-        constexpr auto operator+(int p)
+        constexpr reverse_rand_iterator operator+(size_t p)
         {
-            auto iter = *this + p;
+            return rand_iterator(iter_ - p);
+        }
+
+        constexpr reverse_rand_iterator operator+(int p)
+        {
+            return rand_iterator(iter_ - p);
+        }
+
+        constexpr explicit operator T* () const { return iter_; }
+        
+        constexpr bool operator==(std::nullptr_t) { return iter_ == nullptr; }
+    private:
+        T* iter_;
+    };
+
+    template <typename Node>
+    class forward_list_iterator {
+    public:
+        constexpr forward_list_iterator(Node* node) : node(node) {}
+        constexpr forward_list_iterator(const Node* node) : node(const_cast<Node*>(node)) {}
+        constexpr forward_list_iterator(std::nullptr_t) : node(nullptr) {}
+
+        constexpr void operator++() { node = node->next_; }
+        constexpr void operator++(int) { node = node->next_; }
+
+        auto operator+(size_t p) {
+            auto iter = *this;
+            for (size_t i = 0; i < p; ++i) {
+                if (iter.node) ++iter;
+                else break;
+            }
             return iter;
         }
 
-        constexpr explicit operator Ty* () const { return _iter; }
-        
-        constexpr bool operator==(std::nullptr_t) { return _iter == nullptr; }
-    private:
-        Ty* _iter;
-    };
-
-    template <typename TyNode>
-    class forward_list_iterator {
-    public:
-        constexpr forward_list_iterator(TyNode* node) : node_(node) {}
-        constexpr forward_list_iterator(const TyNode* node) : node_(const_cast<TyNode*>(node)) {}
-        constexpr forward_list_iterator(std::nullptr_t) : node_(nullptr) {}
-
-        constexpr void operator++() { node_ = node_->next_; }
-        constexpr void operator++(int) { node_ = node_->next_; }
-
         constexpr bool operator!=(const forward_list_iterator& other) const
         {
-            return node_ != other.node_;
+            return node != other.node;
         }
 
         constexpr bool operator==(const forward_list_iterator& other) const
         {
-            return node_ == other.node_;
+            return node == other.node;
         }
 
         constexpr bool operator>(const forward_list_iterator& other) const
         {
-            return (node_ - other.node_) > 0;
+            return (node - other.node) > 0;
         }
 
         constexpr bool operator<(const forward_list_iterator& other) const
         {
-            return (node_ - other.node_) < 0;
+            return (node - other.node) < 0;
         }
 
         constexpr bool operator>=(const forward_list_iterator& other) const
         {
-            return (node_ - other.node_) >= 0;
+            return (node - other.node) >= 0;
         }
 
         constexpr bool operator<=(const forward_list_iterator& other) const
         {
-            return (node_ - other.node_) <= 0;
+            return (node - other.node) <= 0;
         }
 
-        constexpr typename TyNode::value_type operator*()
+        constexpr typename Node::value_type operator*()
         {
-            return node_->data_;
+            return node->data_;
         }
 
-        constexpr typename TyNode::value_type operator*() const
+        constexpr typename Node::value_type operator*() const
         {
-            return node_->data_;
+            return node->data_;
         }
 
-        constexpr bool operator==(std::nullptr_t) const { return node_ == nullptr; }
-        constexpr bool operator!=(std::nullptr_t) const { return node_ != nullptr; }
+        constexpr bool operator==(std::nullptr_t) const { return node == nullptr; }
+        constexpr bool operator!=(std::nullptr_t) const { return node != nullptr; }
     private:
         template <typename Ty, typename Allocator>
         friend class forward_list;
-        TyNode* node_;
+        Node* node;
     };
 
     template <typename TyNode>
@@ -209,57 +223,22 @@ namespace fdt {
         return dist;
 	}
 
-    template <typename TyNode>
+    template <typename Node>
     class list_iterator {
     public:
-        constexpr list_iterator(TyNode* ptr) : _node(ptr) {}
-        constexpr list_iterator(const TyNode* ptr) : _node(const_cast<TyNode*>(ptr)) {}
-        constexpr list_iterator(std::nullptr_t) : _node(nullptr) {}
+        constexpr list_iterator(Node* ptr) : node(ptr) {}
+        constexpr list_iterator(const Node* ptr) : node(const_cast<Node*>(ptr)) {}
+        constexpr list_iterator(std::nullptr_t) : node(nullptr) {}
 
-        constexpr void operator++() { _node = _node->_next; }
-        constexpr void operator--() { _node = _node->_prev; }
-        constexpr void operator++(int) { _node = _node->_next; }
-        constexpr void operator--(int) { _node = _node->_prev; }
-
-        constexpr bool operator!=(const list_iterator<TyNode>& r) const
-        {
-            return _node != r._node;
-        }
-
-        constexpr bool operator==(const list_iterator<TyNode>& r) const
-        {
-            return _node == r._node;
-        }
-
-        constexpr bool operator>(const list_iterator<TyNode>& r) const
-        {
-            return ((_node - r._node) > 0);
-        }
-
-        constexpr bool operator>=(const list_iterator<TyNode>& r) const
-        {
-            return ((_node - r._node) >= 0);
-        }
-
-        constexpr bool operator<=(const list_iterator<TyNode>& r) const
-        {
-            return ((_node - r._node) <= 0);
-        }
-
-        constexpr typename TyNode::value_type operator*()
-        {
-            return _node->_data;
-        }
-
-        constexpr typename TyNode::value_type operator*() const
-        {
-            return _node->_data;
-        }
+        constexpr void operator++() { node = node->_next; }
+        constexpr void operator--() { node = node->_prev; }
+        constexpr void operator++(int) { node = node->_next; }
+        constexpr void operator--(int) { node = node->_prev; }
 
         auto operator+(size_t p) {
             auto iter = *this;
             for (size_t i = 0; i < p; ++i) {
-                if (iter._node) ++iter;
+                if (iter.node) ++iter;
                 else break;
             }
             return iter;
@@ -268,70 +247,105 @@ namespace fdt {
         auto operator-(size_t p) {
             auto iter = *this;
             for (size_t i = 0; i < p; ++i) {
-                if (iter._node) --iter;
+                if (iter.node) --iter;
                 else break;
             }
             return iter;
         }
 
-        constexpr explicit operator TyNode*() const { return _node; }
-        constexpr bool operator==(std::nullptr_t) const { return _node == nullptr; }
-        constexpr bool operator!=(std::nullptr_t) const { return _node != nullptr; }
+        constexpr bool operator!=(const list_iterator<Node>& r) const
+        {
+            return node != r.node;
+        }
+
+        constexpr bool operator==(const list_iterator<Node>& r) const
+        {
+            return node == r.node;
+        }
+
+        constexpr bool operator>(const list_iterator<Node>& r) const
+        {
+            return ((node - r.node) > 0);
+        }
+
+        constexpr bool operator>=(const list_iterator<Node>& r) const
+        {
+            return ((node - r.node) >= 0);
+        }
+
+        constexpr bool operator<=(const list_iterator<Node>& r) const
+        {
+            return ((node - r.node) <= 0);
+        }
+
+        constexpr typename Node::value_type operator*()
+        {
+            return node->_data;
+        }
+
+        constexpr typename Node::value_type operator*() const
+        {
+            return node->_data;
+        }
+
+        constexpr explicit operator Node*() const { return node; }
+        constexpr bool operator==(std::nullptr_t) const { return node == nullptr; }
+        constexpr bool operator!=(std::nullptr_t) const { return node != nullptr; }
     private:
-        TyNode* _node;
+        Node* node;
     };
 
-    template <typename TyNode>
+    template <typename Node>
     class reverse_list_iterator {
     public:
-        constexpr reverse_list_iterator(TyNode* ptr) : _node(ptr) {}
-        constexpr reverse_list_iterator(const TyNode* ptr) : _node(const_cast<TyNode*>(ptr)) {}
-        constexpr reverse_list_iterator(std::nullptr_t) : _node(nullptr) {}
+        constexpr reverse_list_iterator(Node* ptr) : node(ptr) {}
+        constexpr reverse_list_iterator(const Node* ptr) : node(const_cast<Node*>(ptr)) {}
+        constexpr reverse_list_iterator(std::nullptr_t) : node(nullptr) {}
 
-        constexpr void operator++() { _node = _node->_prev; }
-        constexpr void operator--() { _node = _node->_next; }
-        constexpr void operator++(int) { _node = _node->_prev; }
-        constexpr void operator--(int) { _node = _node->_next; }
+        constexpr void operator++() { node = node->_prev; }
+        constexpr void operator--() { node = node->_next; }
+        constexpr void operator++(int) { node = node->_prev; }
+        constexpr void operator--(int) { node = node->_next; }
 
-        constexpr bool operator!=(const reverse_list_iterator<TyNode>& r) const
+        constexpr bool operator!=(const reverse_list_iterator<Node>& r) const
         {
-            return _node != r._node;
+            return node != r.node;
         }
 
-        constexpr bool operator==(const reverse_list_iterator<TyNode>& r) const
+        constexpr bool operator==(const reverse_list_iterator<Node>& r) const
         {
-            return _node == r._node;
+            return node == r.node;
         }
 
-        constexpr bool operator>(const reverse_list_iterator<TyNode>& r) const
+        constexpr bool operator>(const reverse_list_iterator<Node>& r) const
         {
-            return ((_node - r._node) > 0);
+            return ((node - r.node) > 0);
         }
 
-        constexpr bool operator>=(const reverse_list_iterator<TyNode>& r) const
+        constexpr bool operator>=(const reverse_list_iterator<Node>& r) const
         {
-            return ((_node - r._node) >= 0);
+            return ((node - r.node) >= 0);
         }
 
-        constexpr bool operator<=(const reverse_list_iterator<TyNode>& r) const
+        constexpr bool operator<=(const reverse_list_iterator<Node>& r) const
         {
-            return ((_node - r._node) <= 0);
+            return ((node - r.node) <= 0);
         }
 
-        constexpr typename TyNode::value_type operator*()
+        constexpr typename Node::value_type operator*()
         {
-            return _node->_data;
+            return node->_data;
         }
 
-        constexpr typename TyNode::value_type operator*() const
+        constexpr typename Node::value_type operator*() const
         {
-            return _node->_data;
+            return node->_data;
         }
 
         auto operator+(size_t p) {
             auto iter = *this;
             for (size_t i = 0; i < p; ++i) {
-                if (iter._node) ++iter;
+                if (iter.node) ++iter;
                 else break;
             }
             return iter;
@@ -340,17 +354,17 @@ namespace fdt {
         auto operator-(size_t p) {
             auto iter = *this;
             for (size_t i = 0; i < p; ++i) {
-                if (iter._node) --iter;
+                if (iter.node) --iter;
                 else break;
             }
             return iter;
         }
 
-        constexpr explicit operator TyNode* () const { return _node; }
-        constexpr bool operator==(std::nullptr_t) const { return _node == nullptr; }
-        constexpr bool operator!=(std::nullptr_t) const { return _node != nullptr; }
+        constexpr explicit operator Node* () const { return node; }
+        constexpr bool operator==(std::nullptr_t) const { return node == nullptr; }
+        constexpr bool operator!=(std::nullptr_t) const { return node != nullptr; }
     private:
-        TyNode* _node;
+        Node* node;
     };
 }
 

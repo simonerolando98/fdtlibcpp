@@ -9,48 +9,46 @@ TEST(vector, construct_default)
 
 TEST(vector, construct_with_size)
 {
-    const auto defalloc = 8;
     const auto size = 50;
     fdt::vector<int> x(size);
 
     ASSERT_EQ(size, x.size());
-    ASSERT_EQ(size + defalloc, x.capacity());
+    ASSERT_EQ(size, x.capacity());
     (void)x;
 }
 
 TEST(vector, construct_with_ilist)
 {
-    const auto defalloc = 8;
     fdt::vector<int> x{ 1, 2, 3, 4, 5 };
     ASSERT_EQ(5, x.size());
-    ASSERT_EQ(5 + defalloc, x.capacity());
+    ASSERT_EQ(5, x.capacity());
     ASSERT_EQ(1, x[0]);
     (void)x;
 }
 
 TEST(vector, empty)
 {
-    const auto defalloc = 8;
     fdt::vector<int> x;
     ASSERT_TRUE(x.empty());
-    ASSERT_EQ(defalloc, x.capacity());
+    ASSERT_EQ(0, x.capacity());
     (void)x;
 }
 
 TEST(vector, size)
 {
-    const auto defalloc = 8;
+
     fdt::vector<int> x{ 1, 2, 3, 4 };
     ASSERT_EQ(4, x.size());
-    ASSERT_EQ(4 + defalloc, x.capacity());
+    ASSERT_EQ(4, x.capacity());
     (void)x;
 }
 
 TEST(vector, capacity)
 {
-    const auto defalloc = 8;
     fdt::vector<int> x;
-    ASSERT_EQ(defalloc, x.capacity());
+    ASSERT_EQ(0, x.capacity());
+    x = fdt::vector<int>(50);
+    ASSERT_EQ(x.size(), x.capacity());
     (void)x;
 }
 

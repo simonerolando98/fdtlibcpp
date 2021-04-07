@@ -178,20 +178,20 @@ namespace fdt {
 
 		constexpr iterator insert_after(const_iterator pos, const Ty& val)
 		{
-			auto ins_pos = pos.node_->next_;
+			auto ins_pos = pos.node->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, val, ins_pos);
-			pos.node_->next_ = n;
+			pos.node->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
 		constexpr iterator insert_after(const_iterator pos, Ty&& val)
 		{
-			auto ins_pos = pos.node_->next_;
+			auto ins_pos = pos.node->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, std::move(val), ins_pos);
-			pos.node_->next_ = n;
+			pos.node->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
@@ -238,19 +238,19 @@ namespace fdt {
 		template <typename... Args>
 		constexpr iterator emplace_after(const_iterator pos, Args&&... args)
 		{
-			auto ins_pos = pos.node_->next_;
+			auto ins_pos = pos.node->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n,
 				std::forward<Args>(args)..., ins_pos);
-			pos.node_->next_ = n;
+			pos.node->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
 		constexpr iterator erase_after(const_iterator pos)
 		{
-			auto del = pos.node_->next_;
-			auto node = pos.node_;
+			auto del = pos.node->next_;
+			auto node = pos.node;
 			node->next_ = del->next_;
 			allocator_traits::deallocate(alloc_, del, 1);
 			before_start_->next_ = start_;

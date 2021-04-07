@@ -13,6 +13,8 @@ if (MSVC)
 		$<$<CONFIG:Debug>:/MTd>
 		$<$<CONFIG:Release>:/MT>
 	)
+	set(CMAKE_CXX_FLAGS_DEBUG "/Wall /Od")
+	set(CMAKE_CXX_FLAGS_RELEASE "/02")
 endif()
 
 include_directories(src/include)

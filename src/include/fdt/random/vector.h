@@ -4,6 +4,7 @@
 #include <memory>
 #include <initializer_list>
 #include <utility>
+#include <cmath>
 #include <fdt/iterator.h>
 #include <fdt/exception.h>
 
@@ -25,25 +26,17 @@ namespace fdt {
 		using allocator_type = Allocator;
 
 		/**
-		 * @brief Default constructor. Allocates a buffer with
-		 * a predefined allocation size for more efficient insertion
-		 * of further elements in the vector.
+		 * @brief Default constructor.
 		 */
-		constexpr vector()
-			: data_(allocator_traits::allocate(alloc_, def_alloc_)), size_(0),
-			capacity_(def_alloc_)
-		{}
+		constexpr vector() : data_(nullptr), size_(0), capacity_(0) {}
 
 		/**
 		 * @brief Pre-allocation constructor. Creates a vector of the given
-		 * size with preallocated memory. A default preallocation size is
-		 * added to the given size in order to allow more efficient insertions
-		 * of further elements. The complexity of this container is linear
-		 * in the specified size.
+		 * size with pre-allocated memory.
 		 */
 		constexpr vector(std::size_t n)
-			: data_(allocator_traits::allocate(alloc_, def_alloc_ + n)), size_(n),
-			capacity_(def_alloc_ + n)
+			: data_(allocator_traits::allocate(alloc_, n)), size_(n),
+				capacity_(n)
 		{
 			for (size_t i = 0; i < size_; ++i)
 				allocator_traits::construct(alloc_, data_ + i);
@@ -60,7 +53,9 @@ namespace fdt {
 			capacity_(other.capacity_)
 		{
 			for (size_t i = 0; i < other.size(); ++i)
-				allocator_traits::construct(alloc_, data_ + i, other[i]);
+				allocator_traits::construct(
+					alloc_, data_ + i, *(other.data_ + i)
+				);
 		}
 
 		/**
@@ -88,8 +83,8 @@ namespace fdt {
 		 * length of the initializer list.
 		 */
 		constexpr vector(std::initializer_list<T> init)
-			: data_(allocator_traits::allocate(alloc_, def_alloc_ + init.size())),
-			size_(init.size()), capacity_(def_alloc_ + init.size())
+			: data_(allocator_traits::allocate(alloc_, init.size())),
+			size_(init.size()), capacity_(init.size())
 		{
 
 			for (size_t i = 0; i < init.size(); ++i)
@@ -340,7 +335,7 @@ namespace fdt {
 				return;
 			}
 
-			reserve(n * 2);
+			reserve(alloc_size(n));
 			size_ = n;
 		}
 
@@ -374,7 +369,7 @@ namespace fdt {
 				size_++;
 				allocator_traits::construct(alloc_, data_ + size_ - 1, value);
 			} else {
-				reserve(capacity_ * 2);
+				reserve(alloc_size(capacity_ + 1));
 				size_++;
 				allocator_traits::construct(alloc_, data_ + size_ - 1, value);
 			}
@@ -395,7 +390,7 @@ namespace fdt {
 					std::forward<Args>(args)...);
 				return *(data_ + size_ - 1);
 			} else {
-				reserve(capacity_ * 2);
+				reserve(alloc_size(capacity_ + 1));
 				size_++;
 				allocator_traits::construct(alloc_, data_ + size_ - 1,
 					std::forward<Args>(args)...);
@@ -428,11 +423,36 @@ namespace fdt {
 
 	private:
 		using allocator_traits = std::allocator_traits<Allocator>;
-		const size_type def_alloc_ = 8;
 		T* data_ = nullptr;
 		size_type size_;
 		size_type capacity_;
 		allocator_type alloc_;
+
+		constexpr static size_t alloc_size(size_t s)
+		{
+			if constexpr (sizeof(s) == 8) {
+				--s;
+				s |= s >> 1;
+				s |= s >> 2;
+				s |= s >> 4;
+				s |= s >> 8;
+				s |= s >> 16;
+				s |= s >> 32;
+				++s;
+				return s;
+			} else if constexpr (sizeof(s) == 4) {
+				--s;
+				s |= s >> 1;
+				s |= s >> 2;
+				s |= s >> 4;
+				s |= s >> 8;
+				s |= s >> 16;
+				++s;
+				return s;
+			} else {
+				return std::pow(2, ceil(log(s) / log(2)));
+			}
+		}
 	};
 
 	template <typename Ty>
