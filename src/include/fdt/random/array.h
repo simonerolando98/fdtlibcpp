@@ -26,7 +26,7 @@ namespace fdt {
 		using const_pointer = const T*;
 		using iterator = random_access_iterator<T>;
 		using const_iterator = random_access_iterator<T>;
-		using reverse_iterator = reverse_iterator<random_access_iterator<T>>;
+		using reverse_iterator = reverse_iterator_traits<random_access_iterator<T>>;
 		using const_reverse_iterator =
 		        const reverse_iterator;
 		using size_type = std::size_t;

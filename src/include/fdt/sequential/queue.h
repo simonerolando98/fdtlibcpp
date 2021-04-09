@@ -1,0 +1,128 @@
+#ifndef FDT_SEQUENTIAL_QUEUE_HPP
+#define FDT_SEQUENTIAL_QUEUE_HPP
+
+#include <fdt/sequential/list.h>
+#include <utility>
+
+namespace fdt {
+    template <typename T, typename Container = fdt::list<T>>
+    class queue {
+    public:
+        using value_type = typename Container::value_type;
+        using size_type = typename Container::size_type;
+        using reference = typename Container::reference;
+        using const_reference = typename Container::const_reference;
+        using pointer = typename Container::pointer;
+        using const_pointer = typename Container::const_pointer;
+        using iterator = typename Container::iterator;
+        using const_iterator = typename Container::const_iterator;
+        using reverse_iterator = typename Container::reverse_iterator;
+        using difference_type = typename Container::difference_type;
+
+        constexpr queue() = data_(Container()) {}
+
+        constexpr explicit queue(const Container &cont)
+        : data_(cont) {}
+
+        constexpr explicit queue(Container &&cont)
+        : data_(std::move(cont)) {}
+
+        constexpr queue(const queue &other)
+        : data_(other.data_) {}
+
+        constexpr queue(queue &&other) noexcept
+        : data_(std::move(other.data_)) {}
+
+        template<typename Alloc>
+        constexpr queue(const Alloc& alloc)
+        : data_(alloc);
+
+        template<typename Alloc>
+        constexpr queue(const Container& cont, const Alloc& alloc)
+        : data_(cont, alloc) {}
+
+        template<typename Alloc>
+        constexpr queue(Container&& cont, const Alloc& alloc) {}
+
+        template<typename Alloc>
+        constexpr queue(const queue& other, const Alloc& alloc) {}
+
+        template<typename Alloc>
+        constexpr queue(queue&& other, const Alloc& alloc) {}
+
+        constexpr queue &operator=(const queue& other)
+        {
+            if (this == &other) return *this;
+
+            queue copy(other);
+            copy.swap(*this);
+            return *this;
+        }
+
+        constexpr queue &operator=(queue &&other) noexcept
+        {
+            if (this == &other) return *this;
+
+            queue copy(std::move(other));
+            copy.swap(*this);
+            return *this;
+        }
+
+        constexpr reference front()
+        {
+            return data_.front();
+        }
+
+        constexpr const_reference front() const
+        {
+            return data_.front();
+        }
+
+        constexpr reference back()
+        {
+            return data_.back();
+        }
+
+        constexpr const_reference back() const
+        {
+            return data_.back();
+        }
+
+        [[nodiscard]]
+        constexpr bool empty() const noexcept
+        {
+            return data_.empty();
+        }
+
+        constexpr size_type size() const
+        {
+            return data_.size();
+        }
+
+        constexpr void push(const reference value)
+        {
+            data_.push_back(value);
+        }
+
+        constexpr void push(reference& value)
+        {
+            data_.push_back(value);
+        }
+
+        template <typename... Args>
+        constexpr decltype(auto) emplace(Args&&... args)
+        {
+            data_.emplace_back(std::forward<Args>(args)...);
+        }
+
+        constexpr void swap(queue& other)
+        {
+            std::swap(data_, other.data_);
+        }
+
+    private:
+        Container data_;
+    };
+}
+
+#endif

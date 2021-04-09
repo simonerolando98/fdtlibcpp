@@ -75,8 +75,6 @@ TEST(array, begin)
 TEST(array, end)
 {
 	fdt::array<int, 3> arr { 1, 2, 3 };
-	auto end = arr.end();
-	
 	ASSERT_NE(arr.begin(), arr.end());
 	(void)arr;
 }
@@ -84,8 +82,8 @@ TEST(array, end)
 TEST(array, at)
 {
 	fdt::array<int, 3> arr { 1, 2, 3 };
-	ASSERT_NO_THROW(auto a = arr.at(0));
-	ASSERT_THROW(auto a = arr.at(3), fdt::array_out_of_range);
+	ASSERT_NO_THROW(arr.at(0));
+	ASSERT_THROW(arr.at(3), fdt::array_out_of_range);
 	ASSERT_EQ(2, arr.at(1));
 	(void)arr;
 }

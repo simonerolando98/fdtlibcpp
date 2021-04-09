@@ -72,10 +72,9 @@ TEST(vector, data)
 TEST(vector, at)
 {
     const fdt::vector<int> x{ 1, 2, 3, 4, 5, 6 };
-    ASSERT_THROW(auto y = x.at(6), fdt::array_out_of_range);
-    ASSERT_NO_THROW(auto y = x.at(2));
-    auto y = x.at(2);
-    ASSERT_EQ(3, y);
+    ASSERT_THROW(x.at(6), fdt::array_out_of_range);
+    ASSERT_NO_THROW(x.at(2));
+    ASSERT_EQ(3, x.at(2));
     (void)x;
 }
 

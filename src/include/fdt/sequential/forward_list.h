@@ -11,23 +11,24 @@
 #include <fdt/iterator.h>
 
 namespace fdt {
-	template <typename Tx>
+	template <typename T>
 	struct fwd_list_node {
-		using value_type = Tx;
+		using value_type = T;
 
 		constexpr fwd_list_node() : next_(nullptr) {}
 
-		constexpr fwd_list_node(const Tx& data, fwd_list_node<Tx>* next = nullptr)
+		constexpr explicit fwd_list_node(const T& data, fwd_list_node<T>* next = nullptr)
 			: data_(data), next_(next) {}
 
 		template <typename... Args>
-		constexpr fwd_list_node(Args&&... args, fwd_list_node<Tx>* next = nullptr)
+		constexpr explicit fwd_list_node(Args&&... args, fwd_list_node<T>* next = nullptr)
 			: data_(std::forward<Args>(args)...), next_(next) {}
 
-		friend bool operator==(const fwd_list_node<Tx>&, const fwd_list_node<Tx>&);
+		template <typename Tx>
+		friend constexpr bool operator==(const fwd_list_node<T>&, const fwd_list_node<T>&);
 
-		Tx data_;
-		fwd_list_node<Tx>* next_;
+		T data_;
+		fwd_list_node<T>* next_;
 	};
 
 	template <typename T>

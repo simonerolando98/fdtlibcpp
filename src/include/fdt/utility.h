@@ -6,6 +6,7 @@
 #include <type_traits>
 
 namespace fdt {
+    using ptrdiff_t = long long;
 	/**
 	 * @brief Simple reimplementation of a pair of data.
 	 * @tparam Tx first element type.
@@ -19,16 +20,16 @@ namespace fdt {
 		constexpr pair() = default;
 
 		constexpr pair(const Tx& first, const Ty& second)
-			: first(first), second(second) {}
+		: first(first), second(second) {}
 
 		constexpr pair(Tx&& first, Ty&& second)
-			: first(std::move(first)), second(std::move(second)) {}
+		: first(std::move(first)), second(std::move(second)) {}
 
 		constexpr pair(const pair& other)
-			: first(other.first), second(other.second) {}
+		: first(other.first), second(other.second) {}
 
-		constexpr pair(pair&& other)
-			: first(std::move(other.first)), second(std::move(other.second)) {}
+		constexpr pair(pair&& other) noexcept
+		: first(std::move(other.first)), second(std::move(other.second)) {}
 
 		constexpr pair& operator=(const pair& other)
 		{
@@ -37,8 +38,8 @@ namespace fdt {
 			return *this;
 		}
 
-		constexpr pair& operator=(pair&& other)
-		{
+		constexpr pair& operator=(pair&& other) noexcept
+        {
 			pair copy(std::move(other));
 			copy.swap(*this);
 			return *this;
@@ -155,6 +156,12 @@ namespace fdt {
 	constexpr bool is_null(Ptr ptr) { return nullptr == ptr; }
 
 	constexpr bool is_null(std::nullptr_t) { return true; }
+
+	template <typename It>
+	constexpr ptrdiff_t distance(It first, It last)
+    {
+	    return (last - first);
+    }
 }
 
 #endif

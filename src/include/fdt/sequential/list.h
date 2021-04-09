@@ -12,58 +12,85 @@ namespace fdt {
 
     /**
      * @brief Doubly linked list node template implementation.
-     * @tparam Tx type of linked list node data payload.
+     * @tparam T type of linked list node data payload.
     */
-    template <typename Tx>
+    template <typename T>
     struct dl_node {
     public:
-        using value_type = Tx;
+        using value_type = T;
 
         constexpr dl_node() : _prev(nullptr), _next(nullptr) {}
 
         constexpr
-            explicit dl_node(const Tx& data, dl_node<Tx>* prev = nullptr, dl_node<Tx>* next = nullptr)
+            explicit dl_node(const T& data, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
             : _data(data), _prev(prev), _next(next) {}
 
         template <typename... Args>
         explicit constexpr
-            dl_node(Args&&... args, dl_node<Tx>* prev = nullptr, dl_node<Tx>* next = nullptr)
+            dl_node(Args&&... args, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
             : _data(std::forward<Args>(args)...), _prev(prev), _next(next) {}
 
-        Tx _data;
-        dl_node<Tx>* _prev;
-        dl_node<Tx>* _next;
+        T _data;
+        dl_node<T>* _prev;
+        dl_node<T>* _next;
     };
 
     /**
      * @brief Template doubly linked list container.
-     * @tparam Ty list data payload type.
+     * @tparam T list data payload type.
     */
-    template <typename Ty, typename Allocator = std::allocator<dl_node<Ty> > >
-    class linked_list {
+    template <typename T, typename Allocator = std::allocator<dl_node<T>>>
+    class list {
     public:        
-        using value_type = Ty;
+        using value_type = T;
         using size_type = std::size_t;
-        using reference = Ty&;
-        using const_reference = const Ty&;
-        using pointer = Ty*;
-        using const_pointer = const Ty*;
-        using iterator = list_iterator<dl_node<Ty> >;
-        using const_iterator = const list_iterator<dl_node<Ty> >;
+        using reference = T&;
+        using const_reference = const T&;
+        using pointer = T*;
+        using const_pointer = const T*;
+        using iterator = list_iterator<dl_node<T> >;
+        using const_iterator = const list_iterator<dl_node<T> >;
         using allocator_type = Allocator;
 
         /**
          * @brief Default constructor. Constructs an empty list.
         */
-        constexpr linked_list() : _list_start(nullptr), _size(0) {}
+        constexpr list() : list_start_(nullptr), size_(0) {}
+
+        constexpr explicit list(const Allocator& alloc)
+        : list_start_(nullptr), size_(0), alloc_(alloc) {}
+
+        constexpr list(size_t count, const T& value, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(value);
+        }
+
+        constexpr explicit list(size_t count)
+        : list_start_(nullptr), size_(0)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(T());
+        }
+
+        constexpr explicit list(size_t count, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(T());
+        }
+
+        template <typename InputIt>
+        constexpr list(InputIt first, InputIt last, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (; first != last; ++first) emplace_back(*first);
+        }
 
         /**
          * @brief Copies another list object.
          * @param other another linked list object.
         */
-        constexpr linked_list(const linked_list& other)
-            : _list_start(nullptr),
-            _size(0)
+        constexpr list(const list& other)
+        : list_start_(nullptr), size_(0)
         {
             for (auto& x : other) push_back(x);
         }
@@ -73,18 +100,18 @@ namespace fdt {
          * @param other another list instance, provided as rvalue reference.
          * It could be a just-constructed anonymous list.
         */
-        constexpr linked_list(linked_list&& other) noexcept
-            : _list_start(std::move(other._list_start)),
-            _size(std::move(other._size)) {}
+        constexpr list(list&& other) noexcept
+        : list_start_(std::move(other.list_start_)),
+          size_(std::move(other.size_)) {}
 
         /**
          * @brief Copies another list using operator =.
          * @param other another list object instance.
          * @return this list instance.
         */
-        constexpr linked_list& operator=(const linked_list& other)
+        constexpr list& operator=(const list& other)
         {
-            linked_list copy(other);
+            list copy(other);
             copy.swap(*this);
             return *this;
         }
@@ -96,14 +123,14 @@ namespace fdt {
          * type of rvalue reference.
          * @return this list instance.
         */
-        constexpr linked_list& operator=(linked_list&& other) noexcept
+        constexpr list& operator=(list&& other) noexcept
         {
-            linked_list copy(std::move(other));
+            list copy(std::move(other));
             copy.swap(*this);
             return *this;
         }
 
-        ~linked_list() { _list_destroy_clear(); }
+        ~list() { _list_destroy_clear(); }
 
     	
         /**
@@ -112,13 +139,13 @@ namespace fdt {
         */
         [[nodiscard]]
         constexpr bool empty() const noexcept
-        { return _size == 0 && is_null(_list_start); }
+        { return size_ == 0 && is_null(list_start_); }
 
         /**
          * @brief Returns the size of the list.
-         * @return linked_list::size_type list size.
+         * @return list::size_type list size.
         */
-        constexpr size_type size() const noexcept { return _size; }
+        constexpr size_type size() const noexcept { return size_; }
 
         /**
          * @brief Clears the list deleting every element and freeing memory.
@@ -129,18 +156,18 @@ namespace fdt {
          * @brief Adds an element to the front of the list, copying its data.
          * @param data data payload to copy inside the new list node.
         */
-        constexpr void push_front(const Ty& data)
+        constexpr void push_front(const T& data)
         {
-            if (is_null(_list_start)) {
-                _list_start = allocator_traits::allocate(_alloc, 1);
-                allocator_traits::construct(_alloc, _list_start, data);
-                _size++;
+            if (is_null(list_start_)) {
+                list_start_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_, data);
+                size_++;
             }
             else {
-                _list_start->_prev = allocator_traits::allocate(_alloc, 1);
-                allocator_traits::construct(_alloc, _list_start->_prev, data, nullptr, _list_start);
-                _list_start = _list_start->_prev;
-                _size++;
+                list_start_->_prev = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_->_prev, data, nullptr, list_start_);
+                list_start_ = list_start_->_prev;
+                size_++;
             }
         }
 
@@ -153,18 +180,18 @@ namespace fdt {
         template <typename... Args>
         constexpr reference emplace_front(Args&&... args)
         {
-            if (is_null(_list_start)) {
-                _list_start = allocator_traits::allocate(_alloc, 1);
-                allocator_traits::construct(_alloc, _list_start, std::forward<Args>(args)...);
-                _size++;
-                return _list_start->_data;
+            if (is_null(list_start_)) {
+                list_start_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_, std::forward<Args>(args)...);
+                size_++;
+                return list_start_->_data;
             }
             else {
-                _list_start->_prev = allocator_traits::allocate(_alloc, 1);
-                allocator_traits::construct(_alloc, _list_start->_prev, std::forward<Args>(args)..., nullptr, _list_start);
-                _list_start = _list_start->_prev;
-                _size++;
-                return _list_start->_prev->_data;
+                list_start_->_prev = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_->_prev, std::forward<Args>(args)..., nullptr, list_start_);
+                list_start_ = list_start_->_prev;
+                size_++;
+                return list_start_->_prev->_data;
             }
         }
 
@@ -172,14 +199,14 @@ namespace fdt {
          * @brief Adds an element to the end of the list, copying its data.
          * @param data data payload to copy inside the node.
         */
-        constexpr void push_back(const Ty& data)
+        constexpr void push_back(const T& data)
         {
-            if (is_null(_list_start)) return push_front(data);
+            if (is_null(list_start_)) return push_front(data);
 
-            auto list = _list_start;
+            auto list = list_start_;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = allocator_traits::allocate(_alloc, 1);
-            allocator_traits::construct(_alloc, list->_next, data, list, nullptr);
+            list->_next = allocator_traits::allocate(alloc_, 1);
+            allocator_traits::construct(alloc_, list->_next, data, list, nullptr);
         }
 
         /**
@@ -191,13 +218,13 @@ namespace fdt {
         template <typename... Args>
         constexpr void emplace_back(Args&&... args)
         {
-            if (is_null(_list_start))
+            if (is_null(list_start_))
                 return emplace_front(std::forward<Args>(args)...);
 
-            auto list = _list_start;
+            auto list = list_start_;
             for (; !is_null(list->_next); list = list->_next);
-            list->_next = allocator_traits::allocate(_alloc, 1);
-            allocator_traits::construct(_alloc, list->_next, std::forward<Args>(args)..., list, nullptr);
+            list->_next = allocator_traits::allocate(alloc_, 1);
+            allocator_traits::construct(alloc_, list->_next, std::forward<Args>(args)..., list, nullptr);
         }
 
         /**
@@ -205,13 +232,13 @@ namespace fdt {
         */
         constexpr void pop_front()
         {
-            if (is_null(_list_start)) return;
+            if (is_null(list_start_)) return;
 
-            auto del = _list_start;
-            _list_start = _list_start->_next;
-            _list_start->_prev = nullptr;
-            allocator_traits::deallocate(_alloc, del, 1);
-            --_size;
+            auto del = list_start_;
+            list_start_ = list_start_->_next;
+            list_start_->_prev = nullptr;
+            allocator_traits::deallocate(alloc_, del, 1);
+            --size_;
         }
 
         /**
@@ -219,13 +246,13 @@ namespace fdt {
         */
         constexpr void pop_back()
         {
-            auto list = _list_start;
+            auto list = list_start_;
             for (; !is_null(list->_next); list = list->_next);
             auto del = list;
             list = list->_prev;
             list->_next = nullptr;
-            allocator_traits::deallocate(_alloc, del, 1);
-            --_size;
+            allocator_traits::deallocate(alloc_, del, 1);
+            --size_;
         }
 
     	constexpr iterator erase(const_iterator pos)
@@ -241,11 +268,11 @@ namespace fdt {
         /**
          * @brief Random access iterator encapsulating the start point of
          * the list.
-         * @return linked_list::rand_iterator<Ty> encapsulating list start point.
+         * @return list::rand_iterator<T> encapsulating list start point.
         */
-        constexpr iterator begin() noexcept { return iterator(_list_start); }
+        constexpr iterator begin() noexcept { return iterator(list_start_); }
 
-    	constexpr const_iterator begin() const noexcept { return iterator(_list_start); }
+    	constexpr const_iterator begin() const noexcept { return iterator(list_start_); }
 
         /**
          * @brief Random access iterator encapsulating list end point, which
@@ -258,58 +285,58 @@ namespace fdt {
 
         /**
          * @brief Returns the first element of the list.
-         * @return linked_list::reference to the first element of the list.
+         * @return list::reference to the first element of the list.
         */
-        constexpr reference front() { return _list_start->_data; }
+        constexpr reference front() { return list_start_->_data; }
 
-    	constexpr const_reference  front() const noexcept { return _list_start->_data; }
+    	constexpr const_reference  front() const noexcept { return list_start_->_data; }
 
         /**
          * @brief Returns the last element of the list.
-         * @return linked_list::reference to the last element of the list.
+         * @return list::reference to the last element of the list.
         */
         constexpr reference back()
         {
-            auto list = _list_start;
+            auto list = list_start_;
             for (; !is_null(list->_next); list = list->_next);
             return list->_data;
         }
 
         constexpr const_reference back() const
         {
-            auto list = _list_start;
+            auto list = list_start_;
             for (; !is_null(list->_next); list = list->_next);
             return list->_data;
         }
 
-        constexpr void swap(linked_list& other) noexcept
+        constexpr void swap(list& other) noexcept
         {
-            std::swap(other._list_start, _list_start);
-            std::swap(other._size, _size);
-            std::swap(other._alloc, _alloc);
+            std::swap(other.list_start_, list_start_);
+            std::swap(other.size_, size_);
+            std::swap(other.alloc_, alloc_);
         }
 
     private:
         constexpr void _list_destroy_clear()
         {
-            if (is_null(_list_start)) return;
+            if (is_null(list_start_)) return;
 
-			dl_node<Ty>* curr = _list_start;
-			dl_node<Ty>* next = nullptr;
+			dl_node<T>* curr = list_start_;
+			dl_node<T>* next = nullptr;
 
 			while (!is_null(curr)) {
 				next = curr->_next;
-				allocator_traits::deallocate(_alloc, curr, 1);
+				allocator_traits::deallocate(alloc_, curr, 1);
 				curr = next;
 			}
 
-			_list_start = nullptr;
+            list_start_ = nullptr;
         }
 
-        using _list_type = dl_node<Ty>*;
-        allocator_type _alloc;
-        _list_type _list_start;
-        std::size_t _size;
+        using list_type = dl_node<T>*;
+        allocator_type alloc_;
+        list_type list_start_;
+        std::size_t size_;
         using allocator_traits = std::allocator_traits<Allocator>;
     };
 }

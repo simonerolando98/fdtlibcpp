@@ -115,16 +115,23 @@ namespace fdt {
          */
         constexpr void swap(stack& other) noexcept
         {
-            swap(other.cont_, cont_);
+            cont_.swap(other.cont_);
         }
     private:
         Container cont_;
-        friend constexpr bool operator==(const stack&, const stack&);
-        friend constexpr bool operator!=(const stack&, const stack&);
-        friend constexpr bool operator<(const stack&, const stack&);
-        friend constexpr bool operator>(const stack&, const stack&);
-        friend constexpr bool operator<=(const stack&, const stack&);
-        friend constexpr bool operator>=(const stack&, const stack&);
+
+        template <typename T>
+        friend constexpr bool operator==(const stack<T>&, const stack<T>&);
+        template <typename T>
+        friend constexpr bool operator!=(const stack<T>&, const stack<T>&);
+        template <typename T>
+        friend constexpr bool operator<(const stack<T>&, const stack<T>&);
+        template <typename T>
+        friend constexpr bool operator>(const stack<T>&, const stack<T>&);
+        template <typename T>
+        friend constexpr bool operator<=(const stack<T>&, const stack<T>&);
+        template <typename T>
+        friend constexpr bool operator>=(const stack<T>&, const stack<T>&);
     };
 
     /**

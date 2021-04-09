@@ -7,6 +7,7 @@
 #include <cmath>
 #include <fdt/iterator.h>
 #include <fdt/exception.h>
+#include <fdt/utility.h>
 
 namespace fdt {
 	template <typename T, class Allocator = std::allocator<T> >
@@ -19,9 +20,8 @@ namespace fdt {
 		using const_pointer = const T*;
 		using iterator = random_access_iterator<T>;
 		using const_iterator = const random_access_iterator<T>;
-		using reverse_iterator = reverse_iterator<random_access_iterator<T>>;
-		using const_reverse_iterator =
-		        const reverse_iterator;
+		using reverse_iterator = fdt::reverse_iterator_traits<random_access_iterator<T>>;
+		using const_reverse_iterator = fdt::const_reverse_iterator_traits<random_access_iterator<T>>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 		using allocator_type = Allocator;
@@ -29,19 +29,39 @@ namespace fdt {
 		/**
 		 * @brief Default constructor.
 		 */
-		constexpr vector() : data_(nullptr), size_(0), capacity_(0) {}
+		constexpr vector()
+		: data_(nullptr), size_(0), capacity_(0) {}
 
-		/**
-		 * @brief Pre-allocation constructor. Creates a vector of the given
-		 * size with pre-allocated memory.
-		 */
-		constexpr vector(std::size_t n)
-			: data_(allocator_traits::allocate(alloc_, n)), size_(n),
-				capacity_(n)
-		{
-			for (size_t i = 0; i < size_; ++i)
-				allocator_traits::construct(alloc_, data_ + i);
-		}
+		constexpr explicit vector(const Allocator& alloc) noexcept
+		: data_(nullptr), size_(0), alloc_(alloc) {}
+
+		constexpr vector(size_t count, const T& value, const Allocator& alloc = Allocator())
+		: size_(count), capacity_(count), alloc_(alloc)
+        {
+		    data_ = allocator_traits::allocate(alloc_, count);
+		    for (size_t i = 0; i < count; ++i)
+		        allocator_traits::construct(alloc_, data_ + i, value);
+        }
+
+        constexpr explicit vector(size_t count, const Allocator& alloc = Allocator())
+        : size_(count), capacity_(count), alloc_(alloc)
+        {
+            data_ = allocator_traits::allocate(alloc_, count);
+            for (size_t i = 0; i < count; ++i)
+                allocator_traits::construct(alloc_, data_ + i);
+        }
+
+        template <typename InputIt>
+        constexpr vector(InputIt first, InputIt last, const Allocator& alloc = Allocator())
+        : size_(distance(first, last)), capacity_(distance(first, last)), alloc_(alloc)
+        {
+            data_ = allocator_traits::allocate(alloc_, capacity_);
+            size_t i = 0;
+            for (; first != last; ++first) {
+                allocator_traits::construct(alloc_, data_ + i, *first);
+                ++i;
+            }
+        }
 
 		/**
 		 * @brief Copy constructor. Copies the content of another vector
@@ -49,15 +69,25 @@ namespace fdt {
 		 * this constructor is linear in size of the vector.
 		 */
 		constexpr vector(const vector& other)
-			: data_(allocator_traits::allocate(alloc_, other.capacity_)),
-			size_(other.size_),
-			capacity_(other.capacity_)
+		: data_(allocator_traits::allocate(alloc_, other.capacity_)),
+		size_(other.size_), capacity_(other.capacity_)
 		{
 			for (size_t i = 0; i < other.size(); ++i)
 				allocator_traits::construct(
 					alloc_, data_ + i, *(other.data_ + i)
 				);
 		}
+
+		constexpr vector(const vector& other, const Allocator& alloc)
+		: size_(other.size_), capacity_(other.capacity_), alloc_(alloc)
+        {
+		    data_ = allocator_traits::allocate(alloc_, other.capacity_);
+		    size_t i = 0;
+		    for (auto it = other.begin(); it != other.end(); ++it) {
+                allocator_traits::construct(alloc_, data_ + i, *it);
+                ++i;
+		    }
+        }
 
 		/**
 		 * @brief Move constructor. Moves the pointer of another vector
@@ -67,13 +97,21 @@ namespace fdt {
 		 * 
 		 */
 		constexpr vector(vector&& other) noexcept
-			: data_(std::move(other.data_)),
-			size_(other.size_), capacity_(other.capacity_)
+		: data_(other.data_), size_(other.size_), capacity_(other.capacity_)
 		{
 			other.data_ = nullptr;
 			other.size_ = 0;
 			other.capacity_ = 0;
 		}
+
+		constexpr vector(vector&& other, const Allocator& alloc)
+		: data_(other.data_), size_(other.size_), capacity_(other.capacity_),
+		alloc_(alloc)
+        {
+		    other.data_ = nullptr;
+		    other.size_ = 0;
+		    other.capacity_ = 0;
+        }
 
 		/**
 		 * @brief Initializer list constructor. Takes an initializer
@@ -83,11 +121,10 @@ namespace fdt {
 		 * vector. The complexity of this constructor is linear in
 		 * length of the initializer list.
 		 */
-		constexpr vector(std::initializer_list<T> init)
-			: data_(allocator_traits::allocate(alloc_, init.size())),
-			size_(init.size()), capacity_(init.size())
+		constexpr vector(std::initializer_list<T> init, const Allocator& alloc = Allocator())
+		: size_(init.size()), capacity_(init.size()), alloc_(alloc)
 		{
-
+            data_ = allocator_traits::allocate(alloc_, init.size());
 			for (size_t i = 0; i < init.size(); ++i)
 				allocator_traits::construct(alloc_, data_ + i,
 					*(init.begin() + i));
@@ -233,7 +270,7 @@ namespace fdt {
 
 		/**
 		 * @brief Returns a constant iterator to the beginning of the vector.
-		 * @return constexpr const_iterator value to the start of the vector.
+		 * @return constexpr const_iterator_traits value to the start of the vector.
 		 */
 		constexpr const_iterator cbegin() const noexcept
 		{
@@ -253,7 +290,7 @@ namespace fdt {
 
 		/**
 		 * @brief Returns a constant iterator to the end of the vector.
-		 * @return constexpr const_iterator value to the end of the vector.
+		 * @return constexpr const_iterator_traits value to the end of the vector.
 		 */
 		constexpr const_iterator cend() const noexcept
 		{
@@ -262,7 +299,7 @@ namespace fdt {
 
 		/**
 		 * @brief Returns a reverse iterator to the beginning of the vector.
-		 * @return constexpr reverse_iterator value to the start of the vector.
+		 * @return constexpr reverse_iterator_traits value to the start of the vector.
 		 */
 		constexpr reverse_iterator rbegin() { return reverse_iterator(data_ + size_ - 1); }
 		constexpr const_reverse_iterator rbegin() const noexcept
@@ -273,7 +310,7 @@ namespace fdt {
 		/**
 		 * @brief Returns a constant reverse iterator to the beginning of the
 		 * vector.
-		 * @return constexpr const_reverse_iterator value to the start of the
+		 * @return constexpr const_reverse_iterator_traits value to the start of the
 		 * vector.
 		 */
 		constexpr const_reverse_iterator crbegin() const noexcept
@@ -283,7 +320,7 @@ namespace fdt {
 
 		/**
 		 * @brief Returns a reverse iterator to the end of the vector.
-		 * @return constexpr reverse_iterator value to the end of the vector.
+		 * @return constexpr reverse_iterator_traits value to the end of the vector.
 		 */
 		constexpr reverse_iterator rend() { return reverse_iterator(data_); }
 		constexpr const_reverse_iterator rend() const noexcept
@@ -293,7 +330,7 @@ namespace fdt {
 
 		/**
 		 * @brief Returns a constant reverse iterator to the end of the vector.
-		 * @return constexpr const_reverse_iterator value to the end of the
+		 * @return constexpr const_reverse_iterator_traits value to the end of the
 		 * vector.
 		 */
 		constexpr const_reverse_iterator crend() const noexcept
@@ -425,8 +462,8 @@ namespace fdt {
 	private:
 		using allocator_traits = std::allocator_traits<Allocator>;
 		T* data_ = nullptr;
-		size_type size_;
-		size_type capacity_;
+		size_type size_{};
+		size_type capacity_{};
 		allocator_type alloc_;
 
 		constexpr static size_t alloc_size(size_t s)

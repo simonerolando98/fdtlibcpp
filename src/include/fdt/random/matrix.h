@@ -33,7 +33,7 @@ namespace fdt {
         using const_pointer = const T*;
         using iterator = random_access_iterator<T>;
         using const_iterator = const random_access_iterator<T>;
-        using reverse_iterator = reverse_iterator<random_access_iterator<T>>;
+        using reverse_iterator = reverse_iterator_traits<random_access_iterator<T>>;
         using const_reverse_iterator =
                 const reverse_iterator;
         using allocator_type = Allocator;
@@ -47,7 +47,7 @@ namespace fdt {
         /**
          * Initializing constructor. Constructs a new matrix object
          * using the initializer list to initialize its values.
-         * @param init std::initializer_list<Ty> containing matrix
+         * @param init std::initializer_list<T> containing matrix
          * values.
          */
         constexpr matrix(std::initializer_list<T> init)

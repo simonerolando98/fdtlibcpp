@@ -146,7 +146,6 @@ TEST(forward_list, insert_after_pos_2e_ilist)
     forward_list<int> x {1, 2, 3, 4, 5 };
     x.insert_after(x.begin() + 2, { 1, 2 });
 
-    auto y = {1, 2, 3, 1, 2, 4, 5 };
     auto it = x.begin();
 
     for (const auto& v : x) {

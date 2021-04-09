@@ -230,7 +230,7 @@ namespace fdt {
         {
             Node* tmp = other.node_;
             other.node_ = node_;
-            node_ = other.node_;
+            node_ = tmp;
         }
     private:
         Node* node_;
@@ -339,8 +339,8 @@ namespace fdt {
         Node* node_;
     };
 
-    template <class Iterator>
-    class reverse_iterator {
+    template <typename Iterator>
+    class const_iterator_traits {
     public:
         using value_type = typename Iterator::value_type;
         using reference = typename Iterator::reference;
@@ -349,13 +349,118 @@ namespace fdt {
         using const_pointer = typename Iterator::const_pointer;
         using difference_type = typename Iterator::difference_type;
 
-        constexpr reverse_iterator() : iter_(nullptr) {}
+        constexpr const_iterator_traits() : iter_(nullptr) {}
 
-        constexpr explicit reverse_iterator(pointer ptr) : iter_(ptr) {}
+        constexpr explicit const_iterator_traits(pointer ptr)
+        : iter_(ptr) {}
 
-        constexpr explicit reverse_iterator(const_pointer ptr) : iter_(const_cast<pointer>(ptr)) {}
+        constexpr explicit const_iterator_traits(const_pointer ptr)
+        : iter_(const_cast<pointer>(ptr)) {}
 
-        constexpr explicit reverse_iterator(std::nullptr_t) : iter_(nullptr) {}
+        constexpr explicit const_iterator_traits(std::nullptr_t)
+        : iter_(nullptr) {}
+
+        constexpr const_iterator_traits(const const_iterator_traits& other)
+        : iter_(other.iter_) {}
+
+        constexpr const_iterator_traits(const_iterator_traits&& other) noexcept
+        : iter_(other.iter_) {}
+
+        constexpr void operator++()
+        {
+            ++iter_;
+        }
+
+        constexpr void operator++(int)
+        {
+            iter_++;
+        }
+
+        constexpr void operator--()
+        {
+            --iter_;
+        }
+
+        constexpr void operator--(int)
+        {
+            iter_--;
+        }
+
+        constexpr bool operator=(const const_iterator_traits& other) const
+        {
+            return iter_ == other.iter_;
+        }
+
+        constexpr bool operator!=(const const_iterator_traits& other) const
+        {
+            return iter_ != other.iter_;
+        }
+
+        constexpr bool operator<(const const_iterator_traits& other) const
+        {
+            return (iter_ - other.iter_) < 0;
+        }
+
+        constexpr bool operator>(const const_iterator_traits& other) const
+        {
+            return !(*this < other);
+        }
+
+        constexpr bool operator<=(const const_iterator_traits& other) const
+        {
+            return (iter_ - other.iter_) <= 0;
+        }
+
+        constexpr bool operator>=(const const_iterator_traits& other) const
+        {
+            return !(*this <= other);
+        }
+
+        constexpr const_reference operator*() const
+        {
+            return *iter_;
+        }
+
+        constexpr const_iterator_traits operator+(size_t p) const
+        {
+            return const_iterator_traits((pointer)(iter_ + p));
+        }
+
+        constexpr const_iterator_traits operator+(int p) const
+        {
+            return const_iterator_traits((pointer)(iter_ + p));
+        }
+
+        constexpr const_iterator_traits operator-(size_t p) const
+        {
+            return const_iterator_traits((pointer)(iter_ - p));
+        }
+
+        constexpr const_iterator_traits operator-(int p) const
+        {
+            return const_iterator_traits((pointer)(iter_ - p));
+        }
+    private:
+        Iterator iter_;
+    };
+
+    template <class Iterator>
+    class reverse_iterator_traits {
+    public:
+        using value_type = typename Iterator::value_type;
+        using reference = typename Iterator::reference;
+        using const_reference = typename Iterator::const_reference;
+        using pointer = typename Iterator::pointer;
+        using const_pointer = typename Iterator::const_pointer;
+        using difference_type = typename Iterator::difference_type;
+
+        constexpr reverse_iterator_traits() : iter_(nullptr) {}
+
+        constexpr explicit reverse_iterator_traits(pointer ptr) : iter_(ptr) {}
+
+        constexpr explicit reverse_iterator_traits(const_pointer ptr) : iter_(const_cast<pointer>(ptr)) {}
+
+        constexpr explicit reverse_iterator_traits(std::nullptr_t) : iter_(nullptr) {}
 
         constexpr void operator++()
         {
@@ -377,12 +482,12 @@ namespace fdt {
             iter_++;
         }
 
-        constexpr bool operator==(const reverse_iterator& other)
+        constexpr bool operator==(const reverse_iterator_traits& other)
         {
             return iter_ == other.iter_;
         }
 
-        constexpr bool operator!=(const reverse_iterator& other)
+        constexpr bool operator!=(const reverse_iterator_traits& other)
         {
             return iter_ != other.iter_;
         }
@@ -397,31 +502,115 @@ namespace fdt {
             return *iter_;
         }
 
-        reverse_iterator operator+(size_t p)
+        constexpr reverse_iterator_traits operator+(size_t p) const
         {
-            auto iter = *this;
-
-            for (size_t i = 0; i < p; ++i) {
-                if (iter.iter_) ++iter;
-                else break;
-            }
-
-            return iter;
+            return reverse_iterator_traits((pointer)(iter_ + p));
         }
 
-        reverse_iterator operator-(size_t p)
+        constexpr reverse_iterator_traits operator-(size_t p) const
         {
-            auto iter = *this;
+            return reverse_iterator_traits((pointer)(iter_ + p));
+        }
 
-            for (size_t i = 0; i < p; ++i) {
-                if (iter.iter_) --iter;
-                else break;
-            }
+        constexpr reverse_iterator_traits operator+(int p) const
+        {
+            return reverse_iterator_traits((pointer)(iter_ + p));
+        }
 
-            return iter;
+        constexpr reverse_iterator_traits operator-(int p) const
+        {
+            return reverse_iterator_traits((pointer)(iter_ + p));
         }
 
         constexpr explicit operator pointer() const
+        {
+            return iter_;
+        }
+
+        constexpr bool operator==(std::nullptr_t) const
+        {
+            return iter_ == nullptr;
+        }
+
+        constexpr bool operator!=(std::nullptr_t) const
+        {
+            return iter_ != nullptr;
+        }
+    private:
+        Iterator iter_;
+    };
+
+    template <typename Iterator>
+    class const_reverse_iterator_traits {
+    public:
+        using value_type = typename Iterator::value_type;
+        using reference = typename Iterator::reference;
+        using const_reference = typename Iterator::const_reference;
+        using pointer = typename Iterator::pointer;
+        using const_pointer = typename Iterator::const_pointer;
+        using difference_type = typename Iterator::difference_type;
+
+        constexpr const_reverse_iterator_traits() : iter_(nullptr)
+        {}
+
+        constexpr explicit const_reverse_iterator_traits(pointer ptr)
+                : iter_(ptr)
+        {}
+
+        constexpr explicit const_reverse_iterator_traits(const_pointer ptr)
+                : iter_(const_cast<pointer>(ptr))
+        {}
+
+        constexpr explicit const_reverse_iterator_traits(std::nullptr_t)
+                : iter_(nullptr)
+        {}
+
+        constexpr void operator++()
+        {
+            --iter_;
+        }
+
+        constexpr void operator++(int)
+        {
+            iter_--;
+        }
+
+        constexpr void operator--()
+        {
+            --iter_;
+        }
+
+        constexpr void operator--(int)
+        {
+            iter_--;
+        }
+
+        constexpr bool operator==(const const_reverse_iterator_traits &other)
+        {
+            return iter_ == other.iter_;
+        }
+
+        constexpr bool operator!=(const const_reverse_iterator_traits &other)
+        {
+            return iter_ != other.iter_;
+        }
+
+        constexpr const_reference operator*() const
+        {
+            return *iter_;
+        }
+
+        const_reverse_iterator_traits operator+(size_t p) const
+        {
+            return const_reverse_iterator_traits((pointer)iter_ + p);
+        }
+
+        const_reverse_iterator_traits operator+(int p) const
+        {
+            return const_reverse_iterator_traits((pointer)iter_ + p);
+        }
+
+        constexpr explicit operator const_pointer() const
         {
             return iter_;
         }
