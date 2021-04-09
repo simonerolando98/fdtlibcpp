@@ -17,10 +17,11 @@ namespace fdt {
 		using const_reference = const T&;
 		using pointer = T*;
 		using const_pointer = const T*;
-		using iterator = rand_iterator<T>;
-		using const_iterator = const rand_iterator<T>;
-		using reverse_iterator = reverse_rand_iterator<T>;
-		using const_reverse_iterator = const reverse_rand_iterator<T>;
+		using iterator = random_access_iterator<T>;
+		using const_iterator = const random_access_iterator<T>;
+		using reverse_iterator = reverse_iterator<random_access_iterator<T>>;
+		using const_reverse_iterator =
+		        const reverse_iterator;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 		using allocator_type = Allocator;

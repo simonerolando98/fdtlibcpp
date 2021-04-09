@@ -31,10 +31,11 @@ namespace fdt {
         using const_reference = const T&;
         using pointer = T*;
         using const_pointer = const T*;
-        using iterator = fdt::rand_iterator<T>;
-        using const_iterator = const fdt::rand_iterator<T>;
-        using reverse_iterator = reverse_rand_iterator<T>;
-        using const_reverse_iterator = const reverse_rand_iterator<T>;
+        using iterator = random_access_iterator<T>;
+        using const_iterator = const random_access_iterator<T>;
+        using reverse_iterator = reverse_iterator<random_access_iterator<T>>;
+        using const_reverse_iterator =
+                const reverse_iterator;
         using allocator_type = Allocator;
 
         /**
@@ -135,17 +136,17 @@ namespace fdt {
          * Returns an iterator to the beginning of the matrix.
          * @return fdt::rand_iterator to the beginning of the matrix.
          */
-        constexpr iterator begin() { return rand_iterator(_data); }
+        constexpr iterator begin() { return iterator(_data); }
 
-        constexpr const_iterator begin() const { return rand_iterator(_data); }
+        constexpr const_iterator begin() const { return iterator(_data); }
 
         /**
          * Returns an iterator to the end of the matrix.
          * @return fdt::rand_iterator to the end of the matrix.
          */
-        constexpr iterator end() { return rand_iterator(_data + Rows * Cols); }
+        constexpr iterator end() { return iterator(_data + Rows * Cols); }
 
-        constexpr const_iterator end() const { return rand_iterator(_data + Rows * Cols); }
+        constexpr const_iterator end() const { return iterator(_data + Rows * Cols); }
 
         /**
          * Returns the underlying data structure containing matrix

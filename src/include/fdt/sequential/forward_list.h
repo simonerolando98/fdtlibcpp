@@ -13,7 +13,6 @@
 namespace fdt {
 	template <typename Tx>
 	struct fwd_list_node {
-	public:
 		using value_type = Tx;
 
 		constexpr fwd_list_node() : next_(nullptr) {}
@@ -25,9 +24,17 @@ namespace fdt {
 		constexpr fwd_list_node(Args&&... args, fwd_list_node<Tx>* next = nullptr)
 			: data_(std::forward<Args>(args)...), next_(next) {}
 
+		friend bool operator==(const fwd_list_node<Tx>&, const fwd_list_node<Tx>&);
+
 		Tx data_;
 		fwd_list_node<Tx>* next_;
 	};
+
+	template <typename T>
+	constexpr bool operator==(const fwd_list_node<T>& lhs, const fwd_list_node<T>& rhs)
+    {
+	    return lhs.data_ == rhs.data_;
+    }
 
 	template <typename Ty, 
 		typename Allocator = std::allocator<fwd_list_node<Ty>>>
@@ -88,7 +95,7 @@ namespace fdt {
 			return *this;
 		}
 
-		constexpr forward_list& operator=(forward_list&& fwdlist)
+		constexpr forward_list& operator=(forward_list&& fwdlist) noexcept
 		{
 			forward_list copy(std::move(fwdlist));
 			copy.swap(*this);
@@ -178,20 +185,20 @@ namespace fdt {
 
 		constexpr iterator insert_after(const_iterator pos, const Ty& val)
 		{
-			auto ins_pos = pos.node->next_;
+			auto ins_pos = pos.node_->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, val, ins_pos);
-			pos.node->next_ = n;
+			pos.node_->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
 		constexpr iterator insert_after(const_iterator pos, Ty&& val)
 		{
-			auto ins_pos = pos.node->next_;
+			auto ins_pos = pos.node_->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n, std::move(val), ins_pos);
-			pos.node->next_ = n;
+			pos.node_->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
@@ -212,7 +219,7 @@ namespace fdt {
 		{
 			if (first == last) return pos;
 			iterator it = pos;
-			iterator ret = nullptr;
+			iterator ret;
 			for (auto iit = first; iit != last; ++iit) {
 				ret = insert_after(it, *iit);
 				++it;
@@ -226,7 +233,7 @@ namespace fdt {
 		{
 			if (ilist.begin() == ilist.end()) return pos;
 			size_t i = 0;
-			iterator ret = nullptr;
+			iterator ret;
 			for (const auto& x : ilist) {
 				ret = insert_after(pos + i, x);
 				++i;
@@ -238,19 +245,19 @@ namespace fdt {
 		template <typename... Args>
 		constexpr iterator emplace_after(const_iterator pos, Args&&... args)
 		{
-			auto ins_pos = pos.node->next_;
+			auto ins_pos = pos.node_->next_;
 			auto n = allocator_traits::allocate(alloc_, 1);
 			allocator_traits::construct(alloc_, n,
 				std::forward<Args>(args)..., ins_pos);
-			pos.node->next_ = n;
+			pos.node_->next_ = n;
 			before_start_->next_ = start_;
 			return iterator(n);
 		}
 
 		constexpr iterator erase_after(const_iterator pos)
 		{
-			auto del = pos.node->next_;
-			auto node = pos.node;
+			auto del = pos.node_->next_;
+			auto node = pos.node_;
 			node->next_ = del->next_;
 			allocator_traits::deallocate(alloc_, del, 1);
 			before_start_->next_ = start_;
@@ -261,7 +268,7 @@ namespace fdt {
 		erase_after(const_iterator first, const_iterator last)
 		{
 			auto dist = distance(first, last);
-			iterator it = nullptr;
+			iterator it;
 			for (ptrdiff_t i = 0; i < dist; ++i)
 				it = erase_after(first);
 			return it;
