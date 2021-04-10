@@ -1,11 +1,11 @@
-#ifndef FDT_UTILITY_H
-#define FDT_UTILITY_H
+#ifndef FTL_UTILITY
+#define FTL_UTILITY
 
 #include <cmath>
 #include <iterator>
 #include <type_traits>
 
-namespace fdt {
+namespace ftl {
     using ptrdiff_t = long long;
 	/**
 	 * @brief Simple reimplementation of a pair of data.

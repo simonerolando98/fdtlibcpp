@@ -1,14 +1,14 @@
-#ifndef FDT_SEQUENTIAL_LINKED_LIST_H
-#define FDT_SEQUENTIAL_LINKED_LIST_H
+#ifndef FTL_LIST
+#define FTL_LIST
 
 #include <cstddef>
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include <fdt/utility.h>
-#include <fdt/iterator.h>
+#include <ftl/utility.h>
+#include <ftl/iterator.h>
 
-namespace fdt {
+namespace ftl {
 
     /**
      * @brief Doubly linked list node template implementation.

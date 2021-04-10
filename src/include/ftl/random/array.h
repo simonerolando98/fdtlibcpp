@@ -1,15 +1,14 @@
-#ifndef FDT_RANDOM_ARRAY_H
-#define FDT_RANDOM_ARRAY_H
+#ifndef FTL_ARRAY
+#define FTL_ARRAY
 
 #include <memory>
 #include <algorithm>
 #include <initializer_list>
 #include <cstddef>
-#include <fdt/iterator.h>
-#include <fdt/exception.h>
+#include <ftl/iterator.h>
+#include <ftl/exception.h>
 
-namespace fdt {
-	
+namespace ftl {
 	/**
 	 * @brief Static array container. Provides safe access to a standard
 	 * stack allocated static array. Size is provided as a template parameter

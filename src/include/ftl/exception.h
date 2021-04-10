@@ -1,9 +1,9 @@
-#ifndef FDTLIBCPP_EXCEPTION_H
-#define FDTLIBCPP_EXCEPTION_H
+#ifndef FTL_EXCEPTION
+#define FTL_EXCEPTION
 
 #include <stdexcept>
 
-namespace fdt {
+namespace ftl {
     /**
      * @brief Matrix out of range index exception.
     */

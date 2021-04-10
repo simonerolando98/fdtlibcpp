@@ -1,9 +1,9 @@
-#ifndef FDT_SEQUENTIAL_STACK_H
-#define FDT_SEQUENTIAL_STACK_H
+#ifndef FTL_STACK
+#define FTL_STACK
 
-#include <fdt/random/vector.h>
+#include <ftl/random/vector.h>
 
-namespace fdt {
+namespace ftl {
     /**
      * @brief Stack adaptor interface which represents a LIFO stack
      * data structure, which allows amortized constant insertion and

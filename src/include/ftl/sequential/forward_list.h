@@ -1,5 +1,5 @@
-#ifndef FDT_SEQUENTIAL_SINGLY_LINKED_LIST_H
-#define FDT_SEQUENTIAL_SINGLY_LINKED_LIST_H
+#ifndef FTL_FORWARD_LIST
+#define FTL_FORWARD_LIST
 
 #include <cstddef>
 #include <memory>
@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
-#include <fdt/utility.h>
-#include <fdt/iterator.h>
+#include <ftl/utility.h>
+#include <ftl/iterator.h>
 
-namespace fdt {
+namespace ftl {
 	template <typename T>
 	struct fwd_list_node {
 		using value_type = T;

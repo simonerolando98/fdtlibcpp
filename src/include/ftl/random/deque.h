@@ -1,11 +1,11 @@
-#ifndef FDT_RANDOM_DEQUE_H
-#define FDT_RANDOM_DEQUE_H
+#ifndef FTL_DEQUE_H
+#define FTL_DEQUE_H
 
-#include <fdt/iterator.h>
+#include <ftl/iterator.h>
 #include <memory>
 #include <algorithm>
 
-namespace fdt {
+namespace ftl {
 	template<typename T, typename Allocator = std::allocator<T>>
 	class deque {
 	public:

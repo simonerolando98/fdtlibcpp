@@ -1,0 +1,8 @@
+#ifndef FTL_ITERATOR
+#define FTL_ITERATOR
+
+namespace ftl {
+
+}
+
+#endif FTL_ITERATOR

@@ -1,16 +1,18 @@
 #include "gtest/gtest.h"
-#include <fdt/random/vector.h>
+#include <ftl/random/vector.h>
+
+using namespace ftl;
 
 TEST(vector, construct_default)
 {
-    fdt::vector<int> x;
+    vector<int> x;
     (void)x;
 }
 
 TEST(vector, construct_with_size)
 {
     const auto size = 50;
-    fdt::vector<int> x(size);
+    vector<int> x(size);
 
     ASSERT_EQ(size, x.size());
     ASSERT_EQ(size, x.capacity());
@@ -19,7 +21,7 @@ TEST(vector, construct_with_size)
 
 TEST(vector, construct_with_ilist)
 {
-    fdt::vector<int> x{ 1, 2, 3, 4, 5 };
+    vector<int> x{ 1, 2, 3, 4, 5 };
     ASSERT_EQ(5, x.size());
     ASSERT_EQ(5, x.capacity());
     ASSERT_EQ(1, x[0]);
@@ -28,7 +30,7 @@ TEST(vector, construct_with_ilist)
 
 TEST(vector, empty)
 {
-    fdt::vector<int> x;
+    vector<int> x;
     ASSERT_TRUE(x.empty());
     ASSERT_EQ(0, x.capacity());
     (void)x;
@@ -37,7 +39,7 @@ TEST(vector, empty)
 TEST(vector, size)
 {
 
-    fdt::vector<int> x{ 1, 2, 3, 4 };
+    vector<int> x{ 1, 2, 3, 4 };
     ASSERT_EQ(4, x.size());
     ASSERT_EQ(4, x.capacity());
     (void)x;
@@ -45,16 +47,16 @@ TEST(vector, size)
 
 TEST(vector, capacity)
 {
-    fdt::vector<int> x;
+    vector<int> x;
     ASSERT_EQ(0, x.capacity());
-    x = fdt::vector<int>(50);
+    x = vector<int>(50);
     ASSERT_EQ(x.size(), x.capacity());
     (void)x;
 }
 
 TEST(vector, front_back)
 {
-    const fdt::vector<int> x{ 1, 2, 3, 4 };
+    const vector<int> x{ 1, 2, 3, 4 };
     ASSERT_EQ(1, x.front());
     ASSERT_EQ(4, x.back());
     (void)x;
@@ -62,7 +64,7 @@ TEST(vector, front_back)
 
 TEST(vector, data)
 {
-    const fdt::vector<int> x{ 1, 2, 3, 4 };
+    const vector<int> x{ 1, 2, 3, 4 };
     ASSERT_NE(nullptr, x.data());
     const auto x_data = x.data();
     ASSERT_EQ(x[0], x_data[0]);
@@ -71,8 +73,8 @@ TEST(vector, data)
 
 TEST(vector, at)
 {
-    const fdt::vector<int> x{ 1, 2, 3, 4, 5, 6 };
-    ASSERT_THROW(x.at(6), fdt::array_out_of_range);
+    const vector<int> x{ 1, 2, 3, 4, 5, 6 };
+    ASSERT_THROW(x.at(6), array_out_of_range);
     ASSERT_NO_THROW(x.at(2));
     ASSERT_EQ(3, x.at(2));
     (void)x;
@@ -80,7 +82,7 @@ TEST(vector, at)
 
 TEST(vector, begin_end)
 {
-    fdt::vector<int> x{ 1, 2, 3, 4, 5 };
+    vector<int> x{ 1, 2, 3, 4, 5 };
     auto begin = x.begin();
     auto end = x.end();
     ASSERT_NE(begin, end);
@@ -94,14 +96,14 @@ TEST(vector, begin_end)
 
 TEST(vector, iter_traversal)
 {
-    fdt::vector<int> x{ 1, 1, 1, 1, 1 };
+    vector<int> x{ 1, 1, 1, 1, 1 };
     for (const auto& y : x) ASSERT_EQ(1, y);
     (void)x;
 }
 
 TEST(vector, push_back)
 {
-    fdt::vector<int> x;
+    vector<int> x;
     x.push_back(1);
     x.push_back(2);
     ASSERT_EQ(1, x.front());
@@ -111,7 +113,7 @@ TEST(vector, push_back)
 
 TEST(vector, emplace_back)
 {
-    fdt::vector<std::string> strs;
+    vector<std::string> strs;
     strs.emplace_back("Hello");
     strs.emplace_back("World");
     ASSERT_EQ("Hello", strs[0]);
@@ -121,7 +123,7 @@ TEST(vector, emplace_back)
 
 TEST(vector, resize)
 {
-    fdt::vector<std::string> strs({
+    vector<std::string> strs({
         "Barbara",
         "Maurizio",
         "Andrea",
@@ -137,7 +139,7 @@ TEST(vector, resize)
 
 TEST(vector, operator_equality)
 {
-    fdt::vector<std::string> strs {
+    vector<std::string> strs {
         "Hello",
         "World"
     };
@@ -149,7 +151,7 @@ TEST(vector, operator_equality)
 
 TEST(vector, operator_nequality)
 {
-    fdt::vector<std::string> strs {
+    vector<std::string> strs {
         "Hello",
         "World"
     };
@@ -162,14 +164,14 @@ TEST(vector, operator_nequality)
 
 TEST(vector, operator_add)
 {
-    fdt::vector<int> v { 1, 2, 3 };
-    fdt::vector<int> u { 2, 3, 4 };
+    vector<int> v { 1, 2, 3 };
+    vector<int> u { 2, 3, 4 };
     auto sum = v + u;
     ASSERT_EQ(3, sum[0]);
     ASSERT_EQ(5, sum[1]);
     ASSERT_EQ(7, sum[2]);
     u.push_back(2);
-    ASSERT_THROW(sum = u + v, fdt::vector_size_mismatch);
+    ASSERT_THROW(sum = u + v, vector_size_mismatch);
     (void)sum;
     (void)u;
     (void)v;
@@ -177,14 +179,14 @@ TEST(vector, operator_add)
 
 TEST(vector, operator_sub)
 {
-    fdt::vector<int> v { 1, 2, 3 };
-    fdt::vector<int> u { 2, 3, 4 };
+    vector<int> v { 1, 2, 3 };
+    vector<int> u { 2, 3, 4 };
     auto sub = v - u;
     ASSERT_EQ(-1, sub[0]);
     ASSERT_EQ(-1, sub[1]);
     ASSERT_EQ(-1, sub[2]);
     u.push_back(2);
-    ASSERT_THROW(sub = u - v, fdt::vector_size_mismatch);
+    ASSERT_THROW(sub = u - v, vector_size_mismatch);
     (void)sub;
     (void)u;
     (void)v;
@@ -192,8 +194,8 @@ TEST(vector, operator_sub)
 
 TEST(vector, reverse_iterator_traversal)
 {
-    fdt::vector<int> v { 1, 2, 3, 4 };
-    fdt::vector<int> u { 4, 3, 2, 1 };
+    vector<int> v { 1, 2, 3, 4 };
+    vector<int> u { 4, 3, 2, 1 };
 
     size_t i = 0;
     for (auto it = v.rbegin(); it != v.rend(); ++it) {

@@ -1,23 +1,25 @@
 #include "gtest/gtest.h"
-#include <fdt/sequential/stack.h>
+#include <ftl/sequential/stack.h>
 #include <string>
+
+using namespace ftl;
 
 TEST(stack, construct_default)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     (void)s;
 }
 
 TEST(stack, empty)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     ASSERT_TRUE(s.empty());
     (void)s;
 }
 
 TEST(stack, size)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     ASSERT_EQ(0, s.size());
     s.push(1);
     s.push(9);
@@ -27,7 +29,7 @@ TEST(stack, size)
 
 TEST(stack, top)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     s.push(5);
     s.push(10);
     s.push(25);
@@ -38,7 +40,7 @@ TEST(stack, top)
 
 TEST(stack, pop)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     s.push(43);
     s.push(255);
     s.push(1024);
@@ -54,7 +56,7 @@ TEST(stack, pop)
 
 TEST(stack, push)
 {
-    fdt::stack<int> s;
+    stack<int> s;
     ASSERT_TRUE(s.empty() && s.size() == 0);
     s.push(5);
     ASSERT_FALSE(s.empty());
@@ -64,7 +66,7 @@ TEST(stack, push)
 
 TEST(stack, emplace)
 {
-    fdt::stack<std::string> s;
+    stack<std::string> s;
     s.emplace("Hello");
     s.emplace("World");
     ASSERT_EQ("World", s.top());

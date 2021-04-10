@@ -1,7 +1,7 @@
-#ifndef FDTLIBCPP_ITERATOR_H
-#define FDTLIBCPP_ITERATOR_H
+#ifndef FTL_ITERATOR_H
+#define FTL_ITERATOR_H
 
-namespace fdt {
+namespace ftl {
 
     template <typename T>
     class random_access_iterator {
@@ -647,3 +647,4 @@ namespace fdt {
 }
 
 #endif
+

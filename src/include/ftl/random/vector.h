@@ -1,15 +1,15 @@
-#ifndef FDT_RANDOM_VECTOR_H
-#define FDT_RANDOM_VECTOR_H
+#ifndef FTL_VECTOR_H
+#define FTL_VECTOR_H
 
 #include <memory>
 #include <initializer_list>
 #include <utility>
 #include <cmath>
-#include <fdt/iterator.h>
-#include <fdt/exception.h>
-#include <fdt/utility.h>
+#include <ftl/iterator.h>
+#include <ftl/exception.h>
+#include <ftl/utility.h>
 
-namespace fdt {
+namespace ftl {
 	template <typename T, class Allocator = std::allocator<T> >
 	class vector {
 	public:
@@ -20,8 +20,8 @@ namespace fdt {
 		using const_pointer = const T*;
 		using iterator = random_access_iterator<T>;
 		using const_iterator = const random_access_iterator<T>;
-		using reverse_iterator = fdt::reverse_iterator_traits<random_access_iterator<T>>;
-		using const_reverse_iterator = fdt::const_reverse_iterator_traits<random_access_iterator<T>>;
+		using reverse_iterator = reverse_iterator_traits<random_access_iterator<T>>;
+		using const_reverse_iterator = const_reverse_iterator_traits<random_access_iterator<T>>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
 		using allocator_type = Allocator;

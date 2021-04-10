@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
-#include <fdt/sequential/forward_list.h>
+#include <ftl/sequential/forward_list.h>
 #include <array>
 #include <iostream>
 
-using namespace fdt;
+using namespace ftl;
 
 TEST(forward_list, construct_default)
 {

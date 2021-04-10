@@ -1,15 +1,15 @@
-#ifndef FDT_RANDOM_MATRIX_H
-#define FDT_RANDOM_MATRIX_H
+#ifndef FTL_MATRIX_H
+#define FTL_MATRIX_H
 
 #include <cmath>
 #include <utility>
 #include <type_traits>
 #include <initializer_list>
 #include <algorithm>
-#include <fdt/exception.h>
-#include <fdt/iterator.h>
+#include <ftl/exception.h>
+#include <ftl/iterator.h>
 
-namespace fdt {
+namespace ftl {
     /**
      * @brief Implementation of a template matrix class.
      * An allocator could be provided as defaulted template
@@ -134,7 +134,7 @@ namespace fdt {
 
         /**
          * Returns an iterator to the beginning of the matrix.
-         * @return fdt::rand_iterator to the beginning of the matrix.
+         * @return ftl::rand_iterator to the beginning of the matrix.
          */
         constexpr iterator begin() { return iterator(_data); }
 
@@ -142,7 +142,7 @@ namespace fdt {
 
         /**
          * Returns an iterator to the end of the matrix.
-         * @return fdt::rand_iterator to the end of the matrix.
+         * @return ftl::rand_iterator to the end of the matrix.
          */
         constexpr iterator end() { return iterator(_data + Rows * Cols); }
 

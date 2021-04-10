@@ -1,10 +1,10 @@
-#ifndef FDT_SEQUENTIAL_QUEUE_HPP
-#define FDT_SEQUENTIAL_QUEUE_HPP
+#ifndef FTL_QUEUE
+#define FTL_QUEUE
 
-#include <fdt/sequential/list.h>
+#include <ftl/sequential/list.h>
 #include <utility>
 
-namespace fdt {
+namespace ftl {
     template <typename T, typename Container = fdt::list<T>>
     class queue {
     public:
