@@ -1,0 +1,514 @@
+#ifndef FTL_ARRAY
+#define FTL_ARRAY
+
+#include <memory>
+#include <algorithm>
+#include <initializer_list>
+#include <cstddef>
+#include <ftl/exception>
+#include <ftl/iterator>
+#include <ftl/utility>
+
+namespace ftl {
+	/**
+	 * @brief Static array container. Provides safe access to a standard
+	 * stack allocated static array. Size is provided as a template parameter
+	 * and is, therefore, part of the type.
+	 * @tparam T type of the container.
+	*/
+	template <typename T, std::size_t Size>
+	class array {
+	public:
+	    // iterators
+        struct iterator;
+        struct const_iterator;
+
+		using value_type = T;
+		using reference = T&;
+		using const_reference = const T&;
+		using pointer = T*;
+		using const_pointer = const T*;
+        using reverse_iterator = ftl::reverse_iterator<iterator>;
+        using const_reverse_iterator =
+                ftl::const_reverse_iterator<const_iterator>;
+		using size_type = std::size_t;
+		using difference_type = std::ptrdiff_t;
+
+		constexpr array() = default;
+
+		/**
+		 * @brief Copies data from another instance into the current instance
+		 * of array.
+		 * @param other another array instance. 
+		*/
+		constexpr array(const array& other)
+		{
+			std::copy(
+				std::begin(other._data), std::begin(other._data) + Size, _data); 
+		}
+
+		/**
+		 * @brief Copies another instance of array using move semantics.
+		 * @param other another array instance
+		*/
+		constexpr array(array&& other) noexcept : _data(std::move(other._data)) {}
+
+		/**
+		 * @brief Initializes the array using an std::initializer_list constructor.
+		 * @param init initializer list with array elements.
+		*/
+		constexpr array(const std::initializer_list<T>& init)
+		{
+			std::copy(init.begin(), init.end(), _data);
+		}
+
+		/**
+		 * @brief Returns the size of the array.
+		 * @return size_type containing the size of the array.
+		*/
+		constexpr auto size() const noexcept { return Size; }
+
+		/**
+		* @brief Checks if the array is empty.
+		* @return true if the size is 0, false otherwise.
+		*/
+		[[nodiscard]]
+		constexpr bool empty() const noexcept { return Size == 0; }
+
+		/**
+		 * @brief Returns the first element of the array.
+		 * @return a reference to the first element of the array.
+		*/
+		constexpr reference front() { return *_data; }
+
+		constexpr const_reference front() const { return *_data; }
+
+		/**
+		 * @brief Returns the last element of the array.
+		 * @return a reference to the last element of the array.
+		*/
+		constexpr reference back() { return *(_data + (Size - 1)); }
+
+		constexpr const_reference back() const { return *(_data + (Size - 1)); }
+
+		/**
+		 * @brief Returns a pointer to the underlying array.
+		 * @return pointer to the underlying array.
+		*/
+		constexpr pointer data() { return _data; }
+
+		constexpr const_pointer data() const { return _data; }
+
+		/**
+		 * @brief Returns the element at the specified position.
+		 * @param i index.
+		 * @return the element at array[i].
+		*/
+		constexpr reference operator[](size_t i) { return *(_data + i); }
+
+		constexpr const_reference operator[](size_t i) const { return *(_data + i); }
+		
+		/**
+		 * @brief Returns the element at the specified position, throwing an
+		 * exception if the access is out of bounds.
+		 * @param i index.
+		 * @return the element at array[i].
+		*/
+		constexpr reference at(size_t i)
+		{
+			if (i >= Size) throw array_out_of_range();
+			return *(_data + i);
+		}
+
+		constexpr const_reference at(size_t i) const
+		{	
+			if (i >= Size) throw array_out_of_range();
+			return *(_data + i);
+		}
+		
+		/**
+		 * @brief Returns an iterator to the beginning of the array.
+		 * @return random access iterator to the beginning of the array.
+		*/
+		constexpr iterator begin()
+		{
+			return iterator(_data);
+		}
+
+		constexpr const_iterator begin() const
+		{
+			return const_iterator(_data);
+		}
+
+		constexpr const_iterator cbegin() const
+		{
+			return const_iterator(_data);
+		}
+
+		/**
+		 * @brief Returns an iterator to the end of the array.
+		 * @return random access iterator to the end of the array.
+		*/
+		constexpr iterator end()
+		{
+			return iterator(_data + Size);
+		}
+
+		constexpr const_iterator end() const
+		{
+			return const_iterator(_data + Size);
+		}
+
+		constexpr const_iterator cend() const
+		{
+			return const_iterator(_data + Size);
+		}
+
+		/**
+		 * @brief Returns a reverse iterator to the (reverse) beginning
+		 * of the array.
+		 * @return reverse random access iterator to the (reverse) beginning
+		 * of the array.
+		*/
+		constexpr reverse_iterator rbegin()
+		{
+			return reverse_iterator(_data + Size - 1);
+		}
+
+		constexpr const_reverse_iterator rbegin() const
+		{
+			return const_reverse_iterator(_data + Size - 1);
+		}
+
+		constexpr const_reverse_iterator crbegin() const
+		{
+			return const_reverse_iterator(_data + Size - 1);
+		}
+
+		/**
+		 * @brief Returns an iterator to the (reverse) end of the array.
+		 * @return reverse random access iterator to the (reverse)
+		 * end of the array.
+		*/
+		constexpr reverse_iterator rend()
+		{
+			return reverse_iterator(begin());
+		}
+
+		constexpr const_reverse_iterator rend() const
+		{
+			return const_reverse_iterator(begin());
+		}
+
+		constexpr const_reverse_iterator crend() const
+		{
+			return const_reverse_iterator(begin());
+		}
+
+		/**
+		 * @brief Fills the array with the given value.
+		 * @param value used to fill the array.
+		*/
+		constexpr void fill(const T& value)
+		{
+			std::fill_n(_data, Size, value);
+		}
+
+		/**
+		 * @brief Swaps the array content with another array instance.
+		 * @param other another array instance.
+		*/
+		constexpr void swap(array& other) noexcept
+		{
+			std::swap(other._data, _data);
+		}
+
+		constexpr array& operator=(const array& other)
+		{
+			if (&other == this) return *this;
+			
+			array copy(other);
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr array& operator=(array&& other) noexcept
+		{
+			if (&other == this) return *this;
+			
+			array copy(std::move(other));
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr array& operator=(std::initializer_list<T> init)
+		{
+			array copy(init);
+			copy.swap(*this);
+			return *this;
+		}
+
+		struct iterator {
+		    using iterator_category = random_access_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference = T&;
+            using const_reference = const T&;
+            using pointer = T*;
+            using const_pointer = const T*;
+
+		    constexpr iterator() = default;
+
+		    constexpr explicit iterator(pointer ptr) : ptr_(ptr) {}
+
+		    constexpr explicit iterator(const_pointer ptr)
+		    : ptr_(const_cast<pointer>(ptr))
+            {}
+
+            constexpr iterator(const iterator& other)
+            : ptr_(other.ptr_)
+            {}
+
+            constexpr iterator(iterator&& other) noexcept
+            : ptr_(other.ptr_)
+            {}
+
+            constexpr iterator& operator=(const iterator& other)
+            {
+		        if (this == &other) return *this;
+		        iterator copy(other);
+		        copy.swap(*this);
+		        return *this;
+            }
+
+            constexpr iterator& operator=(iterator&& other) noexcept
+            {
+		        if (this == &other) return *this;
+		        iterator copy(std::move(other));
+		        copy.swap(*this);
+		        return *this;
+            }
+
+            constexpr iterator& operator++()
+            {
+		        ++ptr_;
+		        return *this;
+            }
+
+            constexpr const iterator& operator++() const
+            {
+                ++ptr_;
+                return *this;
+            }
+
+            constexpr const iterator operator++(int) const
+            {
+		        iterator tmp = *this;
+		        ++(*this);
+		        return tmp;
+            }
+
+            constexpr iterator& operator--()
+            {
+		        --ptr_;
+		        return *this;
+            }
+
+            constexpr const iterator& operator--() const
+            {
+		        --ptr_;
+		        return *this;
+            }
+
+            constexpr const iterator operator--(int)
+            {
+		        iterator tmp = *this;
+		        --(*this);
+		        return tmp;
+            }
+
+            constexpr reference operator*()
+            {
+		        return *ptr_;
+            }
+
+            constexpr const_reference operator*() const
+            {
+		        return *ptr_;
+            }
+
+            constexpr bool operator==(const iterator& other) const
+            {
+		        return ptr_ == other.ptr_;
+            }
+
+            constexpr bool operator!=(const iterator& other) const
+            {
+		        return ptr_ != other.ptr_;
+            }
+
+            constexpr void swap(iterator& other)
+            {
+		        ftl::swap(other.ptr_, ptr_);
+            }
+
+            friend constexpr iterator operator+(const iterator& iter, int n)
+            {
+		        return iterator(iter.ptr_ + n);
+            }
+
+		    friend constexpr iterator operator-(const iterator& iter, int n)
+            {
+                return iterator(iter.ptr_ - n);
+            }
+
+		    friend constexpr iterator operator+(const iterator& iter, size_t n)
+            {
+		        return iterator(iter.ptr_ + n);
+            }
+
+		    friend constexpr iterator operator-(const iterator& iter, size_t n)
+            {
+		        return iterator(iter.ptr_ - n);
+            }
+
+		protected:
+            pointer ptr_;
+		};
+
+		struct const_iterator {
+            using iterator_category = random_access_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference = T&;
+            using const_reference = const T&;
+            using pointer = T*;
+            using const_pointer = const T*;
+
+            constexpr const_iterator() = default;
+
+            constexpr explicit const_iterator(pointer ptr) : ptr_(ptr) {}
+
+            constexpr explicit const_iterator(const_pointer ptr)
+            : ptr_(const_cast<pointer>(ptr))
+            {}
+
+            constexpr const_iterator(const const_iterator& other)
+            : ptr_(other.ptr_)
+            {}
+
+            constexpr const_iterator(const_iterator&& other) noexcept
+            : ptr_(other.ptr_)
+            {}
+
+            constexpr const_iterator& operator=(const const_iterator& other)
+            {
+                if (this == &other) return *this;
+                const_iterator copy(other);
+                copy.swap(*this);
+                return *this;
+            }
+
+            constexpr const_iterator& operator=(const_iterator&& other) noexcept
+            {
+                if (this == &other) return *this;
+                iterator copy(std::move(other));
+                copy.swap(*this);
+                return *this;
+            }
+
+
+            constexpr const const_iterator& operator++()
+            {
+                ++ptr_;
+                return *this;
+            }
+
+            constexpr const const_iterator operator++(int)
+            {
+                const_iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            constexpr const const_iterator& operator--()
+            {
+                --ptr_;
+                return *this;
+            }
+
+            constexpr const const_iterator operator--(int)
+            {
+                const_iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            constexpr const_reference operator*() const
+            {
+                return *ptr_;
+            }
+
+            constexpr bool operator==(const const_iterator& other) const
+            {
+                return ptr_ == other.ptr_;
+            }
+
+            constexpr bool operator!=(const const_iterator& other) const
+            {
+                return ptr_ != other.ptr_;
+            }
+
+            constexpr void swap(const_iterator& other)
+            {
+                ftl::swap(other.ptr_, ptr_);
+            }
+
+            friend constexpr const_iterator
+            operator+(const const_iterator& iter, int n)
+            {
+                return const_iterator(iter.ptr_ + n);
+            }
+
+            friend constexpr const_iterator
+            operator-(const const_iterator& iter, int n)
+            {
+                return const_iterator(iter.ptr_ - n);
+            }
+
+            friend constexpr const_iterator
+            operator+(const const_iterator& iter, size_t n)
+            {
+                return const_iterator(iter.ptr_ + n);
+            }
+
+            friend constexpr const_iterator
+            operator-(const const_iterator& iter, size_t n)
+            {
+                return const_iterator(iter.ptr_ - n);
+            }
+
+        protected:
+            pointer ptr_;
+		};
+
+	private:
+		T _data[Size];
+	};
+
+	template <typename Ty, std::size_t N>
+	constexpr bool operator==(const array<Ty, N>& l, const array<Ty, N>& r)
+	{
+		for (size_t i = 0; i < N; ++i)
+			if (l[i] != r[i]) return false;
+		return true;
+	}
+
+	template <typename Ty, std::size_t N>
+	constexpr bool operator!=(const array<Ty, N>& l, const array<Ty, N>& r)
+	{
+		return !(l == r);
+	}
+}
+
+#endif

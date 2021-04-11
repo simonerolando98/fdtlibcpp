@@ -1,7 +1,7 @@
 #ifndef FTL_QUEUE
 #define FTL_QUEUE
 
-#include <ftl/sequential/list.h>
+#include <ftl/sequential/list>
 #include <utility>
 
 namespace ftl {

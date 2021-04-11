@@ -7,15 +7,17 @@ and integration within ongoing projects.
 ## 1. Requirements
 Any **C++17** compliant compilers shold work. It is recommended to use CMake if you need
 to test the ADTs before usage. If you need to run tests, feel free to clone the repository
-using the command ```git clone --recurse https://github.com/simonerolando98/fdtlibcpp.git```
+using the command ```git clone --recurse https://github.com/simonerolando98/cppftl.git```
 in order to clone te Goole Test library included as submodule of the repository.<br><br>
 **WARNING:** to use CMake in order to generate projects for your IDEs, you need to clone
 using the ```git clone --recurse``` command, otherwise project generation will fail due to
 missing files.
 
 ## 2. Installation
-Run ```git clone https://github.com/simonerolando98/fdtlibcpp.git``` directly into your
-project folder. The git repository provides a ```CMakeLists.txt``` for every subfolder containing
+Run ```git clone https://github.com/simonerolando98/cppftl.git``` directly into your
+project folder, or add it as a git submodule, in order to make sure that future users
+can keep this updated. Run ```git clone https://github.com/simonerolando98/cppflt.git```.
+The git repository provides a ```CMakeLists.txt``` for every subfolder containing
 any source or header file. It is not required to generate a CMake project or to use CMake to build
 any of the header files.
 

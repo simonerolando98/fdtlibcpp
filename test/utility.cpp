@@ -1,6 +1,6 @@
 #include <string>
 #include "gtest/gtest.h"
-#include <ftl/utility.h>
+#include <ftl/utility>
 
 using namespace ftl;
 

@@ -1,0 +1,630 @@
+#ifndef FTL_LIST
+#define FTL_LIST
+
+#include <cstddef>
+#include <memory>
+#include <utility>
+#include <algorithm>
+#include <ftl/utility>
+#include <ftl/iterator>
+
+namespace ftl {
+
+    /**
+     * @brief Doubly linked list node template implementation.
+     * @tparam T type of linked list node data payload.
+    */
+    template <typename T>
+    struct dl_node {
+    public:
+        using value_type = T;
+
+        constexpr dl_node() : prev_(nullptr), next_(nullptr) {}
+
+        constexpr
+            explicit dl_node(const T& data, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
+            : _data(data), prev_(prev), next_(next) {}
+
+        template <typename... Args>
+        explicit constexpr
+            dl_node(Args&&... args, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
+            : _data(std::forward<Args>(args)...), prev_(prev), next_(next) {}
+
+        T _data;
+        dl_node<T>* prev_;
+        dl_node<T>* next_;
+    };
+
+    /**
+     * @brief Template doubly linked list container.
+     * @tparam T list data payload type.
+    */
+    template <typename T, typename Allocator = std::allocator<dl_node<T>>>
+    class list {
+    public:
+        struct iterator;
+        struct const_iterator;
+
+        using value_type = T;
+        using size_type = std::size_t;
+        using reference = T&;
+        using const_reference = const T&;
+        using pointer = T*;
+        using const_pointer = const T*;
+        using allocator_type = Allocator;
+        using reverse_iterator = ftl::reverse_iterator<iterator>;
+        using const_reverse_iterator =
+                ftl::const_reverse_iterator<const_iterator>;
+
+        /**
+         * @brief Default constructor. Constructs an empty list.
+        */
+        constexpr list() : list_start_(nullptr), size_(0) {}
+
+        constexpr explicit list(const Allocator& alloc)
+        : list_start_(nullptr), size_(0), alloc_(alloc) {}
+
+        constexpr list(size_t count, const T& value, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(value);
+        }
+
+        constexpr explicit list(size_t count)
+        : list_start_(nullptr), size_(0)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(T());
+        }
+
+        constexpr explicit list(size_t count, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (size_t i = 0; i < count; ++i) emplace_front(T());
+        }
+
+        template <typename InputIt>
+        constexpr list(InputIt first, InputIt last, const Allocator& alloc = Allocator())
+        : list_start_(nullptr), size_(0), alloc_(alloc)
+        {
+            for (; first != last; ++first) emplace_back(*first);
+        }
+
+        /**
+         * @brief Copies another list object.
+         * @param other another linked list object.
+        */
+        constexpr list(const list& other)
+        : list_start_(nullptr), size_(0)
+        {
+            for (auto& x : other) push_back(x);
+        }
+
+        /**
+         * @brief Moves a list into this object instance.
+         * @param other another list instance, provided as rvalue reference.
+         * It could be a just-constructed anonymous list.
+        */
+        constexpr list(list&& other) noexcept
+        : list_start_(std::move(other.list_start_)),
+          size_(std::move(other.size_)) {}
+
+        /**
+         * @brief Copies another list using operator =.
+         * @param other another list object instance.
+         * @return this list instance.
+        */
+        constexpr list& operator=(const list& other)
+        {
+            list copy(other);
+            copy.swap(*this);
+            return *this;
+        }
+
+        /**
+         * @brief Moves a list object instance into this instance.
+         * @param other another list instance, provided as rvalue reference.
+         * It could represent an anonymous just-constructed list or another
+         * type of rvalue reference.
+         * @return this list instance.
+        */
+        constexpr list& operator=(list&& other) noexcept
+        {
+            list copy(std::move(other));
+            copy.swap(*this);
+            return *this;
+        }
+
+        ~list() { _list_destroy_clear(); }
+
+    	
+        /**
+         * @brief Returns the status of the list.
+         * @return true if empty, false otherwise.
+        */
+        [[nodiscard]]
+        constexpr bool empty() const noexcept
+        { return size_ == 0 && is_null(list_start_); }
+
+        /**
+         * @brief Returns the size of the list.
+         * @return list::size_type list size.
+        */
+        constexpr size_type size() const noexcept { return size_; }
+
+        /**
+         * @brief Clears the list deleting every element and freeing memory.
+        */
+        constexpr void clear() { _list_destroy_clear(); }
+
+        /**
+         * @brief Adds an element to the front of the list, copying its data.
+         * @param data data payload to copy inside the new list node.
+        */
+        constexpr void push_front(const T& data)
+        {
+            if (is_null(list_start_)) {
+                list_start_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_, data);
+                size_++;
+            }
+            else {
+                list_start_->prev_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_->prev_, data, nullptr, list_start_);
+                list_start_ = list_start_->prev_;
+                size_++;
+            }
+        }
+
+        /**
+         * @brief Adds an element to the front of the list, constructing it
+         * in place.
+         * @tparam Args rvalue reference to an argument list. 
+         * @param args constructor arguments.
+        */
+        template <typename... Args>
+        constexpr reference emplace_front(Args&&... args)
+        {
+            if (is_null(list_start_)) {
+                list_start_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_, std::forward<Args>(args)...);
+                size_++;
+                return list_start_->_data;
+            }
+            else {
+                list_start_->prev_ = allocator_traits::allocate(alloc_, 1);
+                allocator_traits::construct(alloc_, list_start_->prev_, std::forward<Args>(args)..., nullptr, list_start_);
+                list_start_ = list_start_->prev_;
+                size_++;
+                return list_start_->prev_->_data;
+            }
+        }
+
+        /**
+         * @brief Adds an element to the end of the list, copying its data.
+         * @param data data payload to copy inside the node.
+        */
+        constexpr void push_back(const T& data)
+        {
+            if (is_null(list_start_)) return push_front(data);
+
+            auto list = list_start_;
+            for (; !is_null(list->next_); list = list->next_);
+            list->next_ = allocator_traits::allocate(alloc_, 1);
+            allocator_traits::construct(alloc_, list->next_, data, list, nullptr);
+        }
+
+        /**
+         * @brief Adds an element to the end of the list, constructing it
+         * in place.
+         * @tparam Args rvalue reference to an argument list. 
+         * @param args constructor arguments.
+        */
+        template <typename... Args>
+        constexpr void emplace_back(Args&&... args)
+        {
+            if (is_null(list_start_))
+                return emplace_front(std::forward<Args>(args)...);
+
+            auto list = list_start_;
+            for (; !is_null(list->next_); list = list->next_);
+            list->next_ = allocator_traits::allocate(alloc_, 1);
+            allocator_traits::construct(alloc_, list->next_, std::forward<Args>(args)..., list, nullptr);
+        }
+
+        /**
+         * @brief Removes the first element of the list, freeing its memory.
+        */
+        constexpr void pop_front()
+        {
+            if (is_null(list_start_)) return;
+
+            auto del = list_start_;
+            list_start_ = list_start_->next_;
+            list_start_->prev_ = nullptr;
+            allocator_traits::deallocate(alloc_, del, 1);
+            --size_;
+        }
+
+        /**
+         * @brief Removes the last element of the list, freeing its memory.
+        */
+        constexpr void pop_back()
+        {
+            auto list = list_start_;
+            for (; !is_null(list->next_); list = list->next_);
+            auto del = list;
+            list = list->prev_;
+            list->next_ = nullptr;
+            allocator_traits::deallocate(alloc_, del, 1);
+            --size_;
+        }
+
+    	constexpr iterator erase(const_iterator pos)
+        {
+            return iterator(nullptr);
+        }
+
+    	constexpr iterator erase(const_iterator first, const_iterator last)
+        {
+            return iterator(nullptr);
+        }
+
+        /**
+         * @brief Random access iterator encapsulating the start point of
+         * the list.
+         * @return list::rand_iterator<T> encapsulating list start point.
+        */
+        constexpr iterator begin() noexcept { return iterator(list_start_); }
+
+    	constexpr const_iterator begin() const noexcept { return iterator(list_start_); }
+
+        /**
+         * @brief Random access iterator encapsulating list end point, which
+         * is always nullptr.
+         * @return nullptr_t.
+        */
+        constexpr iterator end() noexcept { return iterator(nullptr); }
+
+    	constexpr iterator end() const noexcept { return iterator(nullptr); }
+
+        /**
+         * @brief Returns the first element of the list.
+         * @return list::reference to the first element of the list.
+        */
+        constexpr reference front() { return list_start_->_data; }
+
+    	constexpr const_reference  front() const noexcept { return list_start_->_data; }
+
+        /**
+         * @brief Returns the last element of the list.
+         * @return list::reference to the last element of the list.
+        */
+        constexpr reference back()
+        {
+            auto list = list_start_;
+            for (; !is_null(list->next_); list = list->next_);
+            return list->_data;
+        }
+
+        constexpr const_reference back() const
+        {
+            auto list = list_start_;
+            for (; !is_null(list->next_); list = list->next_);
+            return list->_data;
+        }
+
+        constexpr void swap(list& other) noexcept
+        {
+            std::swap(other.list_start_, list_start_);
+            std::swap(other.size_, size_);
+            std::swap(other.alloc_, alloc_);
+        }
+
+        struct iterator {
+            using iterator_category = bidirectional_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference = T&;
+            using const_reference = const T&;
+            using pointer = T*;
+            using const_pointer = const T*;
+            using node_pointer = dl_node<T>*;
+            using const_node_pointer = const dl_node<T>*;
+
+            constexpr iterator() = default;
+
+            constexpr explicit iterator(node_pointer ptr) : ptr_(ptr) {}
+
+            constexpr explicit iterator(const_node_pointer ptr)
+                    : ptr_(const_cast<pointer>(ptr))
+            {}
+
+            constexpr explicit iterator(std::nullptr_t) : ptr_(nullptr) {}
+
+            constexpr explicit iterator(const_iterator it)
+                    : ptr_(reinterpret_cast<node_pointer>(it))
+            {}
+
+            constexpr iterator(const iterator& other)
+                    : ptr_(other.ptr_)
+            {}
+
+            constexpr iterator(iterator&& other) noexcept
+                    : ptr_(other.ptr_)
+            {}
+
+            constexpr iterator& operator=(const iterator& other)
+            {
+                if (this == &other) return *this;
+                iterator copy(other);
+                copy.swap(*this);
+                return *this;
+            }
+
+            constexpr iterator& operator=(iterator&& other) noexcept
+            {
+                if (this == &other) return *this;
+                iterator copy(std::move(other));
+                copy.swap(*this);
+                return *this;
+            }
+
+            constexpr iterator& operator++()
+            {
+                ptr_ = ptr_->next_;
+                return *this;
+            }
+
+            constexpr const iterator operator++(int) const
+            {
+                iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            constexpr iterator& operator--()
+            {
+                ptr_ = ptr_->prev_;
+                return *this;
+            }
+
+            constexpr const iterator operator--(int)
+            {
+                iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            constexpr reference operator*()
+            {
+                return ptr_->data_;
+            }
+
+            constexpr const_reference operator*() const
+            {
+                return ptr_->data_;
+            }
+
+            constexpr explicit operator node_pointer() const
+            {
+                return ptr_;
+            }
+
+            constexpr explicit operator const_node_pointer() const
+            {
+                return reinterpret_cast<const_node_pointer>(ptr_);
+            }
+
+            constexpr bool operator==(const iterator& other) const
+            {
+                return ptr_ == other.ptr_;
+            }
+
+            constexpr bool operator!=(const iterator& other) const
+            {
+                return ptr_ != other.ptr_;
+            }
+
+            constexpr void swap(iterator& other)
+            {
+                ftl::swap(other.ptr_, ptr_);
+            }
+
+            friend constexpr iterator operator+(const iterator& iter, int n)
+            {
+                auto tmp = iter;
+                for (int i = 0; i < n; ++i)
+                    if (tmp.ptr_) ++tmp;
+                return tmp;
+            }
+
+            friend constexpr iterator operator-(const iterator& iter, int n)
+            {
+                auto tmp = iter;
+                for (int i = 0; i < n; ++i)
+                    if (tmp.ptr_) --tmp;
+                return tmp;
+            }
+
+            friend constexpr iterator operator+(const iterator& iter, size_t n)
+            {
+                auto tmp = iter;
+                for (size_t i = 0; i < n; ++i)
+                    if (tmp.ptr_) ++tmp;
+                return tmp;
+            }
+
+            friend constexpr iterator operator-(const iterator& iter, size_t n)
+            {
+                auto tmp = iter;
+                for (size_t i = 0; i < n; ++i)
+                    if (tmp.ptr_) --tmp;
+                return tmp;
+            }
+
+        protected:
+            node_pointer ptr_;
+            template <typename U, typename Alloc>
+            friend class forward_list;
+        };
+
+        struct const_iterator {
+            using iterator_category = bidirectional_iterator_tag;
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference = T&;
+            using const_reference = const T&;
+            using pointer = T*;
+            using const_pointer = const T*;
+            using node_pointer = dl_node<T>*;
+            using const_node_pointer = const dl_node<T>*;
+
+            constexpr const_iterator() = default;
+
+            constexpr explicit const_iterator(node_pointer ptr) : ptr_(ptr) {}
+
+            constexpr explicit const_iterator(const_node_pointer ptr)
+                    : ptr_(const_cast<node_pointer>(ptr))
+            {}
+
+            constexpr explicit const_iterator(std::nullptr_t) : ptr_(nullptr) {}
+
+            constexpr explicit const_iterator(iterator it)
+                    : ptr_(reinterpret_cast<node_pointer>(it))
+            {}
+
+            constexpr const_iterator(const const_iterator& other)
+                    : ptr_(other.ptr_)
+            {}
+
+            constexpr const_iterator(const_iterator&& other) noexcept
+                    : ptr_(other.ptr_)
+            {}
+
+            constexpr const_iterator& operator=(const const_iterator& other)
+            {
+                if (this == &other) return *this;
+                const_iterator copy(other);
+                copy.swap(*this);
+                return *this;
+            }
+
+            constexpr const_iterator& operator=(const_iterator&& other) noexcept
+            {
+                if (this == &other) return *this;
+                const_iterator copy(std::move(other));
+                copy.swap(*this);
+                return *this;
+            }
+
+            constexpr const const_iterator& operator++()
+            {
+                ptr_ = ptr_->next_;
+                return *this;
+            }
+
+            constexpr const const_iterator operator++(int)
+            {
+                const_iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            constexpr const const_iterator& operator--()
+            {
+                ptr_ = ptr_->prev_;
+                return *this;
+            }
+
+            constexpr const const_iterator operator--(int)
+            {
+                const_iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            constexpr const_reference operator*() const
+            {
+                return ptr_->data_;
+            }
+
+            constexpr bool operator==(const const_iterator& other) const
+            {
+                return ptr_ == other.ptr_;
+            }
+
+            constexpr bool operator!=(const const_iterator& other) const
+            {
+                return ptr_ != other.ptr_;
+            }
+
+            constexpr void swap(const_iterator& other)
+            {
+                ftl::swap(other.ptr_, ptr_);
+            }
+
+            friend constexpr const_iterator
+            operator+(const const_iterator& iter, int n)
+            {
+                auto tmp = iter;
+                for (int i = 0; i < n; ++i)
+                    if (tmp.ptr_) ++tmp;
+                return tmp;
+            }
+
+            friend constexpr const_iterator
+            operator-(const const_iterator& iter, int n)
+            {
+                auto tmp = iter;
+                for (int i = 0; i < n; ++i)
+                    if (tmp.ptr_) --tmp;
+                return tmp;
+            }
+
+            friend constexpr const_iterator
+            operator+(const const_iterator& iter, size_t n)
+            {
+                auto tmp = iter;
+                for (size_t i = 0; i < n; ++i)
+                    if (tmp.ptr_) ++tmp;
+                return tmp;
+            }
+
+            friend constexpr const_iterator
+            operator-(const const_iterator& iter, size_t n)
+            {
+                auto tmp = iter;
+                for (size_t i = 0; i < n; ++i)
+                    if (tmp.ptr_) --tmp;
+                return tmp;
+            }
+
+        protected:
+            node_pointer ptr_;
+        };
+    private:
+        constexpr void _list_destroy_clear()
+        {
+            if (is_null(list_start_)) return;
+
+			dl_node<T>* curr = list_start_;
+			dl_node<T>* next = nullptr;
+
+			while (!is_null(curr)) {
+				next = curr->next_;
+				allocator_traits::deallocate(alloc_, curr, 1);
+				curr = next;
+			}
+
+            list_start_ = nullptr;
+        }
+
+        using list_type = dl_node<T>*;
+        allocator_type alloc_;
+        list_type list_start_;
+        std::size_t size_;
+        using allocator_traits = std::allocator_traits<Allocator>;
+    };
+}
+
+#endif

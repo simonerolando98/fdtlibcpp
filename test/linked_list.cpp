@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include <ftl/sequential/list.h>
+#include <ftl/sequential/list>
 #include <array>
 
 using namespace ftl;

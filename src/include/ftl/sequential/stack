@@ -1,7 +1,7 @@
 #ifndef FTL_STACK
 #define FTL_STACK
 
-#include <ftl/random/vector.h>
+#include <ftl/random/vector>
 
 namespace ftl {
     /**

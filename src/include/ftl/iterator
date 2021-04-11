@@ -1,8 +1,271 @@
 #ifndef FTL_ITERATOR
 #define FTL_ITERATOR
 
+#include <type_traits>
+
 namespace ftl {
+	struct input_iterator_tag {};
+	struct output_iterator_tag {};
+	struct forward_iterator_tag : public input_iterator_tag {};
+	struct bidirectional_iterator_tag : public forward_iterator_tag {};
+	struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+	struct contiguous_iterator_tag : public random_access_iterator_tag {};
 
+	template <class Iterator>
+	struct reverse_iterator {
+	    using iterator_category = typename Iterator::iterator_category;
+	    using difference_type = typename Iterator::difference_type;
+
+	    constexpr reverse_iterator() = default;
+
+	    constexpr explicit reverse_iterator(typename Iterator::pointer ptr)
+	    : iter_(ptr)
+        {}
+
+        constexpr explicit
+        reverse_iterator(typename Iterator::const_pointer ptr)
+        : iter_(ptr)
+        {}
+
+        constexpr explicit reverse_iterator(Iterator iter) : iter_(iter) {}
+
+        constexpr reverse_iterator(const reverse_iterator& other)
+        : iter_(other.iter_)
+        {}
+
+        constexpr reverse_iterator(reverse_iterator&& other) noexcept
+        : iter_(std::move(other.iter_))
+        {}
+
+        constexpr reverse_iterator& operator=(const reverse_iterator& other)
+        {
+	        if (this == &other) return *this;
+	        reverse_iterator copy(*this);
+            copy.swap(*this);
+            return *this;
+        }
+
+        constexpr reverse_iterator& operator=(reverse_iterator&& other) noexcept
+        {
+	        if (this == &other) return *this;
+	        reverse_iterator copy(std::move(other));
+	        copy.swap(*this);
+	        return *this;
+        }
+
+        constexpr reverse_iterator& operator++()
+        {
+	        --iter_;
+	        return *this;
+        }
+
+        constexpr const reverse_iterator& operator++() const
+        {
+	        --iter_;
+	        return *this;
+        }
+
+        constexpr const reverse_iterator operator++(int) const
+        {
+	        reverse_iterator tmp = *this;
+	        --(*this);
+	        return tmp;
+        }
+
+        constexpr reverse_iterator& operator--()
+        {
+	        ++iter_;
+	        return *this;
+        }
+
+        constexpr const reverse_iterator& operator--() const
+        {
+	        ++iter_;
+	        return *this;
+        }
+
+        constexpr const reverse_iterator operator--(int) const
+        {
+	        reverse_iterator tmp = *this;
+	        ++(*this);
+	        return tmp;
+        }
+
+        constexpr typename Iterator::const_reference operator*() const
+        {
+	        return *iter_;
+        }
+
+        constexpr typename Iterator::reference operator*()
+        {
+            return *iter_;
+        }
+
+        friend constexpr reverse_iterator
+        operator+(const reverse_iterator& iter, int n)
+        {
+            return reverse_iterator(iter.iter_ - n);
+        }
+
+        friend constexpr reverse_iterator
+        operator+(const reverse_iterator& iter, size_t n)
+        {
+            return reverse_iterator(iter.iter_ - n);
+        }
+
+        friend constexpr reverse_iterator
+        operator-(const reverse_iterator& iter, int n)
+        {
+            return reverse_iterator(iter.iter_ + n);
+        }
+
+        friend constexpr reverse_iterator
+        operator-(const reverse_iterator& iter, size_t n)
+        {
+            return reverse_iterator(iter.iter_ + n);
+        }
+
+        constexpr bool operator==(const reverse_iterator& other) const
+        {
+	        return iter_ == other.iter_;
+        }
+
+        constexpr bool operator!=(const reverse_iterator& other) const
+        {
+	        return iter_ != other.iter_;
+        }
+
+        constexpr void swap(reverse_iterator& other)
+        {
+	        auto tmp = std::move(other.iter_);
+            other.iter_ = std::move(iter_);
+            iter_ = std::move(tmp);
+        }
+	private:
+        Iterator iter_;
+	};
+
+	template <class Iterator>
+	struct const_reverse_iterator {
+        using iterator_category = typename Iterator::iterator_category;
+        using difference_type = typename Iterator::difference_type;
+
+        constexpr const_reverse_iterator() = default;
+
+        constexpr explicit
+        const_reverse_iterator(typename Iterator::pointer ptr)
+        : iter_(ptr)
+        {}
+
+        constexpr explicit
+        const_reverse_iterator(typename Iterator::const_pointer ptr)
+        : iter_(ptr)
+        {}
+
+        constexpr explicit const_reverse_iterator(Iterator iter)
+        : iter_(iter)
+        {}
+
+        constexpr const_reverse_iterator(const const_reverse_iterator& other)
+        : iter_(other.iter_)
+        {}
+
+        constexpr
+        const_reverse_iterator(const_reverse_iterator&& other) noexcept
+        : iter_(std::move(other.iter_))
+        {}
+
+        constexpr const_reverse_iterator&
+        operator=(const const_reverse_iterator& other)
+        {
+            if (this == &other) return *this;
+            reverse_iterator copy(*this);
+            copy.swap(*this);
+            return *this;
+        }
+
+        constexpr const_reverse_iterator&
+        operator=(const_reverse_iterator&& other) noexcept
+        {
+            if (this == &other) return *this;
+            reverse_iterator copy(std::move(other));
+            copy.swap(*this);
+            return *this;
+        }
+
+        constexpr const const_reverse_iterator& operator++()
+        {
+            --iter_;
+            return *this;
+        }
+
+        constexpr const const_reverse_iterator operator++(int) const
+        {
+            const_reverse_iterator tmp = *this;
+            --(*this);
+            return tmp;
+        }
+
+        constexpr const const_reverse_iterator& operator--()
+        {
+            ++iter_;
+            return *this;
+        }
+
+        constexpr const const_reverse_iterator operator--(int) const
+        {
+            const_reverse_iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        constexpr typename Iterator::const_reference operator*() const
+        {
+            return *iter_;
+        }
+
+        friend constexpr const_reverse_iterator
+        operator+(const const_reverse_iterator& iter, int n)
+        {
+            return const_reverse_iterator(iter.iter_ - n);
+        }
+
+        friend constexpr const_reverse_iterator
+        operator+(const const_reverse_iterator& iter, size_t n)
+        {
+            return reverse_iterator(iter.iter_ - n);
+        }
+
+        friend constexpr const_reverse_iterator
+        operator-(const const_reverse_iterator& iter, int n)
+        {
+            return reverse_iterator(iter.iter_ + n);
+        }
+
+        friend constexpr const_reverse_iterator
+        operator-(const const_reverse_iterator& iter, size_t n)
+        {
+            return reverse_iterator(iter.iter_ + n);
+        }
+
+        constexpr bool operator==(const const_reverse_iterator& other) const
+        {
+            return iter_ == other.iter_;
+        }
+
+        constexpr bool operator!=(const const_reverse_iterator& other) const
+        {
+            return iter_ != other.iter_;
+        }
+
+        constexpr void swap(const_reverse_iterator& other)
+        {
+            auto tmp = std::move(other.iter_);
+            other.iter_ = std::move(iter_);
+            iter_ = std::move(tmp);
+        }
+    private:
+        Iterator iter_;
+	};
 }
-
-#endif FTL_ITERATOR
+#endif

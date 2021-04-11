@@ -1,7 +1,6 @@
-#ifndef FTL_DEQUE_H
-#define FTL_DEQUE_H
+#ifndef FTL_DEQUE_
+#define FTL_DEQUE_
 
-#include <ftl/iterator.h>
 #include <memory>
 #include <algorithm>
 
@@ -17,8 +16,6 @@ namespace ftl {
 		using const_reference = const T&;
 		using pointer = T*;
 		using const_pointer = const T*;
-		using iterator = rand_iterator<T>;
-		using const_iterator = const rand_iterator<T>;
 
 	private:
 		allocator_type va;
