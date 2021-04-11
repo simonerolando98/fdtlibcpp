@@ -16,7 +16,7 @@ missing files.
 ## 2. Installation
 Run ```git clone https://github.com/simonerolando98/cppftl.git``` directly into your
 project folder, or add it as a git submodule, in order to make sure that future users
-can keep this updated. Run ```git clone https://github.com/simonerolando98/cppflt.git```.
+can keep this updated. Run ```git clone https://github.com/simonerolando98/cppftl.git```.
 The git repository provides a ```CMakeLists.txt``` for every subfolder containing
 any source or header file. It is not required to generate a CMake project or to use CMake to build
 any of the header files.
