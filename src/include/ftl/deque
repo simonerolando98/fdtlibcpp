@@ -96,7 +96,7 @@ namespace ftl {
 			return *this;
 		}
 
-		constexpr deque& operator=(deque&& other)
+		constexpr deque& operator=(deque&& other) noexcept
 		{
 			if (&other != this) {
 				deque copy(std::move(other));

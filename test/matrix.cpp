@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include <ftl/random/matrix>
+#include <ftl/matrix>
 
 using namespace ftl;
 

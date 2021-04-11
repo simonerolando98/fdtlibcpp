@@ -1,4 +1,4 @@
-#include <ftl/sequential/forward_list>
+#include <ftl/forward_list>
 #include <iostream>
 
 int main(int argc, char** argv)

@@ -345,7 +345,7 @@ namespace ftl {
 			return const_iterator(before_start_);
 		}
 
-        struct iterator {
+        struct iterator : public const_iterator {
             using iterator_category = forward_iterator_tag;
             using difference_type = std::ptrdiff_t;
             using value_type = T;

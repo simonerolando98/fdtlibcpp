@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include <ftl/random/vector>
+#include <ftl/vector>
 
 using namespace ftl;
 

@@ -1,11 +1,11 @@
 #ifndef FTL_QUEUE
 #define FTL_QUEUE
 
-#include <ftl/sequential/list>
+#include <ftl/list>
 #include <utility>
 
 namespace ftl {
-    template <typename T, typename Container = fdt::list<T>>
+    template <typename T, typename Container = ftl::list<T>>
     class queue {
     public:
         using value_type = typename Container::value_type;
@@ -16,10 +16,9 @@ namespace ftl {
         using const_pointer = typename Container::const_pointer;
         using iterator = typename Container::iterator;
         using const_iterator = typename Container::const_iterator;
-        using reverse_iterator = typename Container::reverse_iterator;
         using difference_type = typename Container::difference_type;
 
-        constexpr queue() = data_(Container()) {}
+        constexpr queue() : data_(Container()) {}
 
         constexpr explicit queue(const Container &cont)
         : data_(cont) {}
@@ -34,8 +33,9 @@ namespace ftl {
         : data_(std::move(other.data_)) {}
 
         template<typename Alloc>
-        constexpr queue(const Alloc& alloc)
-        : data_(alloc);
+        constexpr explicit queue(const Alloc& alloc)
+        : data_(alloc)
+        {}
 
         template<typename Alloc>
         constexpr queue(const Container& cont, const Alloc& alloc)
@@ -99,14 +99,19 @@ namespace ftl {
             return data_.size();
         }
 
-        constexpr void push(const reference value)
+        constexpr void push(const T& value)
         {
             data_.push_back(value);
         }
 
-        constexpr void push(reference& value)
+        constexpr void push(T&& value)
         {
             data_.push_back(value);
+        }
+
+        constexpr void pop()
+        {
+            data_.pop_front();
         }
 
         template <typename... Args>

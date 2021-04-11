@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include <ftl/sequential/stack>
+#include <ftl/stack>
 #include <string>
 
 using namespace ftl;

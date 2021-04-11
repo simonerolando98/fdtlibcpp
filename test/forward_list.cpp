@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include <ftl/sequential/forward_list>
+#include <ftl/forward_list>
 #include <array>
 #include <iostream>
 

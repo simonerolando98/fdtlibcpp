@@ -1,7 +1,7 @@
 #ifndef FTL_STACK
 #define FTL_STACK
 
-#include <ftl/random/vector>
+#include <ftl/vector>
 
 namespace ftl {
     /**
@@ -23,11 +23,14 @@ namespace ftl {
         using reference = typename Container::reference;
         using const_reference = typename Container::const_reference;
     
-        constexpr stack() : cont_() {}
+        constexpr stack()
+        : cont_() {}
 
-        constexpr stack(const stack& other) : cont_(other.cont_) {}
+        constexpr stack(const stack& other) noexcept
+        : cont_(other.cont_) {}
 
-        constexpr stack(stack&& other) : cont_(std::move(other._cont)) {}
+        constexpr stack(stack&& other) noexcept
+        : cont_(std::move(other._cont)) {}
 
         ~stack() = default;
 
@@ -48,7 +51,7 @@ namespace ftl {
          * @param other rvalue reference stack object.
          * @return constexpr stack& *this object.
          */
-        constexpr stack& operator=(stack&& other)
+        constexpr stack& operator=(stack&& other) noexcept
         {
             stack copy(std::move(other));
             copy.swap(*this);
@@ -68,7 +71,7 @@ namespace ftl {
          * @return constexpr size_type size of the stack as unsigned
          * integer value.
          */
-        constexpr size_type size() const noexcept { return cont_.size(); }
+        constexpr size_type size() const { return cont_.size(); }
 
         /**
          * @brief Returns the last-inserted element. This element can be
@@ -124,14 +127,6 @@ namespace ftl {
         friend constexpr bool operator==(const stack<T>&, const stack<T>&);
         template <typename T>
         friend constexpr bool operator!=(const stack<T>&, const stack<T>&);
-        template <typename T>
-        friend constexpr bool operator<(const stack<T>&, const stack<T>&);
-        template <typename T>
-        friend constexpr bool operator>(const stack<T>&, const stack<T>&);
-        template <typename T>
-        friend constexpr bool operator<=(const stack<T>&, const stack<T>&);
-        template <typename T>
-        friend constexpr bool operator>=(const stack<T>&, const stack<T>&);
     };
 
     /**
@@ -156,46 +151,6 @@ namespace ftl {
                                 const stack<Ty, Container>& r)
     {
         return !(l == r);
-    }
-
-    /**
-     * @brief Stacks lexicographical comparison.
-    */
-    template <typename Ty, typename Container>
-    constexpr bool operator<(const stack<Ty, Container>& l,
-                                const stack<Ty, Container>& r)
-    {
-        return (l.cont_ < r.cont_);
-    }
-
-    /**
-     * @brief Stacks lexicographical comparison.
-    */
-    template <typename Ty, typename Container>
-    constexpr bool operator>(const stack<Ty, Container>& l,
-                                const stack<Ty, Container>& r)
-    {
-        return !(l < r);
-    }
-
-    /**
-     * @brief Stacks lexicographical comparison.
-    */
-    template <typename Ty, typename Container>
-    constexpr bool operator<=(const stack<Ty, Container>& l,
-                                const stack<Ty, Container>& r)
-    {
-        return (l.cont_ <= r.cont_);
-    }
-
-    /**
-     * @brief Stacks lexicographical comparison.
-    */
-    template <typename Ty, typename Container>
-    constexpr bool operator>=(const stack<Ty, Container>& l,
-                                const stack<Ty, Container>& r)
-    {
-        return !(l <= r);
     }
 }
 

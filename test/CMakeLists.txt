@@ -1,6 +1,6 @@
 set(TEST_BIN all_tests)
 
-set(TEST_SOURCES main.cpp array.cpp vector.cpp matrix.cpp utility.cpp forward_list.cpp linked_list.cpp stack.cpp)
+set(TEST_SOURCES main.cpp array.cpp vector.cpp matrix.cpp utility.cpp forward_list.cpp linked_list.cpp stack.cpp queue.cpp)
 
 add_executable(${TEST_BIN} ${TEST_SOURCES})
 

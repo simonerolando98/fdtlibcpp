@@ -14,23 +14,28 @@ namespace ftl {
      * @brief Doubly linked list node template implementation.
      * @tparam T type of linked list node data payload.
     */
-    template <typename T>
+    template<typename T>
     struct dl_node {
     public:
         using value_type = T;
 
-        constexpr dl_node() : prev_(nullptr), next_(nullptr) {}
+        constexpr dl_node() : prev_(nullptr), next_(nullptr)
+        {}
 
         constexpr
-            explicit dl_node(const T& data, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
-            : _data(data), prev_(prev), next_(next) {}
+        explicit dl_node(const T& data, dl_node<T>* prev = nullptr,
+                         dl_node<T>* next = nullptr)
+                : data_(data), prev_(prev), next_(next)
+        {}
 
-        template <typename... Args>
+        template<typename... Args>
         explicit constexpr
-            dl_node(Args&&... args, dl_node<T>* prev = nullptr, dl_node<T>* next = nullptr)
-            : _data(std::forward<Args>(args)...), prev_(prev), next_(next) {}
+        dl_node(Args&& ... args, dl_node<T>* prev = nullptr,
+                dl_node<T>* next = nullptr)
+                : data_(std::forward<Args>(args)...), prev_(prev), next_(next)
+        {}
 
-        T _data;
+        T data_;
         dl_node<T>* prev_;
         dl_node<T>* next_;
     };
@@ -39,7 +44,7 @@ namespace ftl {
      * @brief Template doubly linked list container.
      * @tparam T list data payload type.
     */
-    template <typename T, typename Allocator = std::allocator<dl_node<T>>>
+    template<typename T, typename Allocator = std::allocator<dl_node<T>>>
     class list {
     public:
         struct iterator;
@@ -47,6 +52,7 @@ namespace ftl {
 
         using value_type = T;
         using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
         using reference = T&;
         using const_reference = const T&;
         using pointer = T*;
@@ -54,37 +60,42 @@ namespace ftl {
         using allocator_type = Allocator;
         using reverse_iterator = ftl::reverse_iterator<iterator>;
         using const_reverse_iterator =
-                ftl::const_reverse_iterator<const_iterator>;
+        ftl::const_reverse_iterator<const_iterator>;
 
         /**
          * @brief Default constructor. Constructs an empty list.
         */
-        constexpr list() : list_start_(nullptr), size_(0) {}
+        constexpr list() : list_start_(nullptr), size_(0)
+        {}
 
         constexpr explicit list(const Allocator& alloc)
-        : list_start_(nullptr), size_(0), alloc_(alloc) {}
+                : list_start_(nullptr), size_(0), alloc_(alloc)
+        {}
 
-        constexpr list(size_t count, const T& value, const Allocator& alloc = Allocator())
-        : list_start_(nullptr), size_(0), alloc_(alloc)
+        constexpr list(size_t count, const T& value,
+                       const Allocator& alloc = Allocator())
+                : list_start_(nullptr), size_(0), alloc_(alloc)
         {
             for (size_t i = 0; i < count; ++i) emplace_front(value);
         }
 
         constexpr explicit list(size_t count)
-        : list_start_(nullptr), size_(0)
+                : list_start_(nullptr), size_(0)
         {
             for (size_t i = 0; i < count; ++i) emplace_front(T());
         }
 
-        constexpr explicit list(size_t count, const Allocator& alloc = Allocator())
-        : list_start_(nullptr), size_(0), alloc_(alloc)
+        constexpr explicit list(size_t count,
+                                const Allocator& alloc = Allocator())
+                : list_start_(nullptr), size_(0), alloc_(alloc)
         {
             for (size_t i = 0; i < count; ++i) emplace_front(T());
         }
 
-        template <typename InputIt>
-        constexpr list(InputIt first, InputIt last, const Allocator& alloc = Allocator())
-        : list_start_(nullptr), size_(0), alloc_(alloc)
+        template<typename InputIt>
+        constexpr
+        list(InputIt first, InputIt last, const Allocator& alloc = Allocator())
+                : list_start_(nullptr), size_(0), alloc_(alloc)
         {
             for (; first != last; ++first) emplace_back(*first);
         }
@@ -94,7 +105,7 @@ namespace ftl {
          * @param other another linked list object.
         */
         constexpr list(const list& other)
-        : list_start_(nullptr), size_(0)
+                : list_start_(nullptr), size_(0)
         {
             for (auto& x : other) push_back(x);
         }
@@ -105,8 +116,9 @@ namespace ftl {
          * It could be a just-constructed anonymous list.
         */
         constexpr list(list&& other) noexcept
-        : list_start_(std::move(other.list_start_)),
-          size_(std::move(other.size_)) {}
+                : list_start_(std::move(other.list_start_)),
+                  size_(std::move(other.size_))
+        {}
 
         /**
          * @brief Copies another list using operator =.
@@ -134,27 +146,38 @@ namespace ftl {
             return *this;
         }
 
-        ~list() { _list_destroy_clear(); }
+        ~list()
+        {
+            _list_destroy_clear();
+        }
 
-    	
+
         /**
          * @brief Returns the status of the list.
          * @return true if empty, false otherwise.
         */
         [[nodiscard]]
         constexpr bool empty() const noexcept
-        { return size_ == 0 && is_null(list_start_); }
+        {
+            return size_ == 0 && is_null(list_start_);
+        }
 
         /**
          * @brief Returns the size of the list.
          * @return list::size_type list size.
         */
-        constexpr size_type size() const noexcept { return size_; }
+        constexpr size_type size() const noexcept
+        {
+            return size_;
+        }
 
         /**
          * @brief Clears the list deleting every element and freeing memory.
         */
-        constexpr void clear() { _list_destroy_clear(); }
+        constexpr void clear()
+        {
+            _list_destroy_clear();
+        }
 
         /**
          * @brief Adds an element to the front of the list, copying its data.
@@ -166,10 +189,10 @@ namespace ftl {
                 list_start_ = allocator_traits::allocate(alloc_, 1);
                 allocator_traits::construct(alloc_, list_start_, data);
                 size_++;
-            }
-            else {
+            } else {
                 list_start_->prev_ = allocator_traits::allocate(alloc_, 1);
-                allocator_traits::construct(alloc_, list_start_->prev_, data, nullptr, list_start_);
+                allocator_traits::construct(alloc_, list_start_->prev_, data,
+                                            nullptr, list_start_);
                 list_start_ = list_start_->prev_;
                 size_++;
             }
@@ -181,21 +204,23 @@ namespace ftl {
          * @tparam Args rvalue reference to an argument list. 
          * @param args constructor arguments.
         */
-        template <typename... Args>
-        constexpr reference emplace_front(Args&&... args)
+        template<typename... Args>
+        constexpr reference emplace_front(Args&& ... args)
         {
             if (is_null(list_start_)) {
                 list_start_ = allocator_traits::allocate(alloc_, 1);
-                allocator_traits::construct(alloc_, list_start_, std::forward<Args>(args)...);
+                allocator_traits::construct(alloc_, list_start_,
+                                            std::forward<Args>(args)...);
                 size_++;
-                return list_start_->_data;
-            }
-            else {
+                return list_start_->data_;
+            } else {
                 list_start_->prev_ = allocator_traits::allocate(alloc_, 1);
-                allocator_traits::construct(alloc_, list_start_->prev_, std::forward<Args>(args)..., nullptr, list_start_);
+                allocator_traits::construct(alloc_, list_start_->prev_,
+                                            std::forward<Args>(args)...,
+                                            nullptr, list_start_);
                 list_start_ = list_start_->prev_;
                 size_++;
-                return list_start_->prev_->_data;
+                return list_start_->prev_->data_;
             }
         }
 
@@ -210,7 +235,8 @@ namespace ftl {
             auto list = list_start_;
             for (; !is_null(list->next_); list = list->next_);
             list->next_ = allocator_traits::allocate(alloc_, 1);
-            allocator_traits::construct(alloc_, list->next_, data, list, nullptr);
+            allocator_traits::construct(alloc_, list->next_, data, list,
+                                        nullptr);
         }
 
         /**
@@ -219,8 +245,8 @@ namespace ftl {
          * @tparam Args rvalue reference to an argument list. 
          * @param args constructor arguments.
         */
-        template <typename... Args>
-        constexpr void emplace_back(Args&&... args)
+        template<typename... Args>
+        constexpr void emplace_back(Args&& ... args)
         {
             if (is_null(list_start_))
                 return emplace_front(std::forward<Args>(args)...);
@@ -228,7 +254,9 @@ namespace ftl {
             auto list = list_start_;
             for (; !is_null(list->next_); list = list->next_);
             list->next_ = allocator_traits::allocate(alloc_, 1);
-            allocator_traits::construct(alloc_, list->next_, std::forward<Args>(args)..., list, nullptr);
+            allocator_traits::construct(alloc_, list->next_,
+                                        std::forward<Args>(args)..., list,
+                                        nullptr);
         }
 
         /**
@@ -259,12 +287,12 @@ namespace ftl {
             --size_;
         }
 
-    	constexpr iterator erase(const_iterator pos)
+        constexpr iterator erase(const_iterator pos)
         {
             return iterator(nullptr);
         }
 
-    	constexpr iterator erase(const_iterator first, const_iterator last)
+        constexpr iterator erase(const_iterator first, const_iterator last)
         {
             return iterator(nullptr);
         }
@@ -274,26 +302,50 @@ namespace ftl {
          * the list.
          * @return list::rand_iterator<T> encapsulating list start point.
         */
-        constexpr iterator begin() noexcept { return iterator(list_start_); }
+        constexpr iterator begin() noexcept
+        {
+            return iterator(list_start_);
+        }
 
-    	constexpr const_iterator begin() const noexcept { return iterator(list_start_); }
+        constexpr const_iterator begin() const noexcept
+        {
+            return const_iterator(list_start_);
+        }
+
+        constexpr const_iterator cbegin() const noexcept
+        {
+            return const_iterator(begin);
+        }
 
         /**
          * @brief Random access iterator encapsulating list end point, which
          * is always nullptr.
          * @return nullptr_t.
         */
-        constexpr iterator end() noexcept { return iterator(nullptr); }
+        constexpr iterator end() noexcept
+        {
+            return iterator(nullptr);
+        }
 
-    	constexpr iterator end() const noexcept { return iterator(nullptr); }
+        constexpr const_iterator end() const noexcept
+        {
+            return const_iterator(nullptr);
+        }
+
+        constexpr const_iterator cend() const noexcept
+        {
+            return const_iterator(nullptr);
+        }
 
         /**
          * @brief Returns the first element of the list.
          * @return list::reference to the first element of the list.
         */
-        constexpr reference front() { return list_start_->_data; }
+        constexpr reference front()
+        { return list_start_->data_; }
 
-    	constexpr const_reference  front() const noexcept { return list_start_->_data; }
+        constexpr const_reference front() const noexcept
+        { return list_start_->data_; }
 
         /**
          * @brief Returns the last element of the list.
@@ -303,16 +355,20 @@ namespace ftl {
         {
             auto list = list_start_;
             for (; !is_null(list->next_); list = list->next_);
-            return list->_data;
+            return list->data_;
         }
 
         constexpr const_reference back() const
         {
             auto list = list_start_;
             for (; !is_null(list->next_); list = list->next_);
-            return list->_data;
+            return list->data_;
         }
 
+        /**
+         * Swaps the content of this container with the one passed as argument.
+         * @param other list container to swap content with.
+         */
         constexpr void swap(list& other) noexcept
         {
             std::swap(other.list_start_, list_start_);
@@ -320,7 +376,7 @@ namespace ftl {
             std::swap(other.alloc_, alloc_);
         }
 
-        struct iterator {
+        struct iterator : public const_iterator {
             using iterator_category = bidirectional_iterator_tag;
             using difference_type = std::ptrdiff_t;
             using value_type = T;
@@ -333,13 +389,15 @@ namespace ftl {
 
             constexpr iterator() = default;
 
-            constexpr explicit iterator(node_pointer ptr) : ptr_(ptr) {}
+            constexpr explicit iterator(node_pointer ptr) : ptr_(ptr)
+            {}
 
             constexpr explicit iterator(const_node_pointer ptr)
                     : ptr_(const_cast<pointer>(ptr))
             {}
 
-            constexpr explicit iterator(std::nullptr_t) : ptr_(nullptr) {}
+            constexpr explicit iterator(std::nullptr_t) : ptr_(nullptr)
+            {}
 
             constexpr explicit iterator(const_iterator it)
                     : ptr_(reinterpret_cast<node_pointer>(it))
@@ -464,8 +522,10 @@ namespace ftl {
 
         protected:
             node_pointer ptr_;
-            template <typename U, typename Alloc>
-            friend class forward_list;
+
+            template<typename U, typename Alloc>
+            friend
+            class forward_list;
         };
 
         struct const_iterator {
@@ -481,13 +541,15 @@ namespace ftl {
 
             constexpr const_iterator() = default;
 
-            constexpr explicit const_iterator(node_pointer ptr) : ptr_(ptr) {}
+            constexpr explicit const_iterator(node_pointer ptr) : ptr_(ptr)
+            {}
 
             constexpr explicit const_iterator(const_node_pointer ptr)
                     : ptr_(const_cast<node_pointer>(ptr))
             {}
 
-            constexpr explicit const_iterator(std::nullptr_t) : ptr_(nullptr) {}
+            constexpr explicit const_iterator(std::nullptr_t) : ptr_(nullptr)
+            {}
 
             constexpr explicit const_iterator(iterator it)
                     : ptr_(reinterpret_cast<node_pointer>(it))
@@ -602,19 +664,20 @@ namespace ftl {
         protected:
             node_pointer ptr_;
         };
+
     private:
         constexpr void _list_destroy_clear()
         {
             if (is_null(list_start_)) return;
 
-			dl_node<T>* curr = list_start_;
-			dl_node<T>* next = nullptr;
+            dl_node<T>* curr = list_start_;
+            dl_node<T>* next = nullptr;
 
-			while (!is_null(curr)) {
-				next = curr->next_;
-				allocator_traits::deallocate(alloc_, curr, 1);
-				curr = next;
-			}
+            while (!is_null(curr)) {
+                next = curr->next_;
+                allocator_traits::deallocate(alloc_, curr, 1);
+                curr = next;
+            }
 
             list_start_ = nullptr;
         }
