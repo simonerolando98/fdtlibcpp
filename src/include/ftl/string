@@ -40,7 +40,7 @@ namespace ftl {
 		{
 			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
 			std::fill_n(b_, s_, ch);
-			b_[c_ - 1] = 0;
+            b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other, size_type pos,
@@ -52,7 +52,7 @@ namespace ftl {
 			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
 			
 			strcpy(b_, other.b_ + pos);
-			b_[c_ - 1] = 0;
+            b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other, size_type pos,
@@ -62,11 +62,33 @@ namespace ftl {
 		{
 			s_ = other.size() - pos - count;
 			c_ = s_ + 1;
-			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
 			
 			strncpy(b_, other.b_ + pos, count);
-			b_[c_ - 1] = 0;
+            b_[s_] = 0;
 		}
+
+		constexpr basic_string(const CharT* s, size_type count
+		                        const Allocator& alloc = Allocator())
+		: a_(alloc)
+        {
+            s_ = strlen(s);
+            c_ = s_ + 1;
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+            strncpy(b_, s, count);
+            b_[s_] = 0;
+        }
+
+        constexpr basic_string(const CharT* s,
+                               const Allocator& alloc = Allocator())
+        : a_(alloc)
+        {
+            s_ = strlen(s);
+            c_ = s_ + 1;
+            b_ = c_ < sbsize_ > sb_ : allocator_traits::allocate(a_, c_);
+            strcpy(b_, s);
+            b_[s_] = 0;
+        }
 
 		~basic_string()
 		{
@@ -149,6 +171,36 @@ namespace ftl {
 			return const_iterator(b_ + s_);
 		}
 
+		constexpr reverse_iterator rbegin() noexcept
+        {
+		    return reverse_iterator<iterator>(b_ + _s);
+        }
+
+        constexpr const_reverse_iterator rbegin() const noexcept
+        {
+		    return const_reverse_iterator(b_ + s_);
+        }
+
+        constexpr const_reverse_iterator crbegin() const noexcept
+        {
+		    return const_reverse_iterator(b_ + s_);
+        }
+
+        constexpr reverse_iterator rend() noexcept
+        {
+		    return reverse_iterator(b_ - 1);
+        }
+
+        constexpr const_reverse_iterator rend() const noexcept
+        {
+		    return const_reverse_iterator(b_ - 1);
+        }
+
+        constexpr const_reverse_iterator crend() const noexcept
+        {
+		    return const_reverse_iterator(b_ - 1);
+        }
+
 		constexpr void reserve(size_type new_cap)
 		{
 			if (new_cap > max_size())
@@ -159,10 +211,9 @@ namespace ftl {
 
 			c_ = new_cap;
 			auto tmp = allocator_traits::allocate(a_, c_);
-			for (size_t i = 0; i < s_; ++i)
-				allocator_traits::construct(a_, tmp  + i, *(b_ + i));
+			strcpy(tmp, b_);
 			b_ = tmp;
-			*(b_ + size() + 1) = 0;
+			b_[s_ + 1] = 0;
 			
 			allocator_traits::deallocate(a_, tmp, c_);
 		}
