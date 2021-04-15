@@ -162,36 +162,6 @@ TEST(vector, operator_nequality)
     (void)strs1;
 }
 
-TEST(vector, operator_add)
-{
-    vector<int> v { 1, 2, 3 };
-    vector<int> u { 2, 3, 4 };
-    auto sum = v + u;
-    ASSERT_EQ(3, sum[0]);
-    ASSERT_EQ(5, sum[1]);
-    ASSERT_EQ(7, sum[2]);
-    u.push_back(2);
-    ASSERT_THROW(sum = u + v, vector_size_mismatch);
-    (void)sum;
-    (void)u;
-    (void)v;
-}
-
-TEST(vector, operator_sub)
-{
-    vector<int> v { 1, 2, 3 };
-    vector<int> u { 2, 3, 4 };
-    auto sub = v - u;
-    ASSERT_EQ(-1, sub[0]);
-    ASSERT_EQ(-1, sub[1]);
-    ASSERT_EQ(-1, sub[2]);
-    u.push_back(2);
-    ASSERT_THROW(sub = u - v, vector_size_mismatch);
-    (void)sub;
-    (void)u;
-    (void)v;
-}
-
 TEST(vector, reverse_iterator_traversal)
 {
     vector<int> v { 1, 2, 3, 4 };

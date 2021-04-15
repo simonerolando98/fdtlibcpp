@@ -770,44 +770,6 @@ namespace ftl {
 	{
 		return !(l == r);
 	}
-
-	/**
-	 * @brief Performs the summation of two vectors, provided that the type
-	 * of the container is arithmetic-compliant or provides correctly
-	 * overloaded operators.
-	 * @tparam Ty deduced type of the container.
-	 * @param l vector.
-	 * @param r vector.
-	 * @return constexpr auto new vector containing the summation result.
-	 */
-	template <typename Ty>
-	constexpr auto operator+(const vector<Ty>& l, const vector<Ty>& r)
-	{
-		if (l.size() != r.size()) throw vector_size_mismatch();
-		vector<Ty> sum;
-		for (size_t i = 0; i < l.size(); ++i)
-			sum.emplace_back(l[i] + r[i]);
-		return sum;
-	}
-
-	/**
-	 * @brief Performs the subtraction of two vectors, provided that the type
-	 * of the container is arithmetic-compliant or provides correctly
-	 * overloaded operators.
-	 * @tparam Ty deduced type of the container.
-	 * @param l vector.
-	 * @param r vector.
-	 * @return constexpr auto new vector containing the subtraction result.
-	 */
-	template <typename Ty>
-	constexpr auto operator-(const vector<Ty>& l, const vector<Ty>& r)
-	{
-		if (l.size() != r.size()) throw vector_size_mismatch();
-		vector<Ty> sum;
-		for (size_t i = 0; i < l.size(); ++i)
-			sum.emplace_back(l[i] - r[i]);
-		return sum;
-	}
 }
 
 #endif
