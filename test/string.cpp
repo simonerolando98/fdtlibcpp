@@ -18,3 +18,12 @@ TEST(string, charstar_construct)
 	(void)long_str;
 	(void)str;
 }
+
+TEST(string, copyother)
+{
+	string str = "Hello";
+	string newstr = str;
+	ASSERT_EQ(str, newstr);
+	(void)str;
+	(void)newstr;
+}
