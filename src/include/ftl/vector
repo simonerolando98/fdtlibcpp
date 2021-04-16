@@ -448,6 +448,121 @@ namespace ftl {
 			if (size_ == 0) return;
 			size_--;
 		}
+		struct const_iterator {
+			using iterator_category = random_access_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+			using value_type = T;
+			using reference = T&;
+			using const_reference = const T&;
+			using pointer = T*;
+			using const_pointer = const T*;
+
+			constexpr const_iterator() = default;
+
+			constexpr explicit const_iterator(pointer ptr) : ptr_(ptr) {}
+
+			constexpr explicit const_iterator(const_pointer ptr)
+				: ptr_(const_cast<pointer>(ptr))
+			{}
+
+			constexpr const_iterator(const const_iterator& other)
+				: ptr_(other.ptr_)
+			{}
+
+			constexpr const_iterator(const_iterator&& other) noexcept
+				: ptr_(other.ptr_)
+			{}
+
+			constexpr const_iterator& operator=(const const_iterator& other)
+			{
+				if (this == &other) return *this;
+				const_iterator copy(other);
+				copy.swap(*this);
+				return *this;
+			}
+
+			constexpr const_iterator& operator=(const_iterator&& other) noexcept
+			{
+				if (this == &other) return *this;
+				iterator copy(std::move(other));
+				copy.swap(*this);
+				return *this;
+			}
+
+
+			constexpr const const_iterator& operator++()
+			{
+				++ptr_;
+				return *this;
+			}
+
+			constexpr const const_iterator operator++(int)
+			{
+				const_iterator tmp = *this;
+				++(*this);
+				return tmp;
+			}
+
+			constexpr const const_iterator& operator--()
+			{
+				--ptr_;
+				return *this;
+			}
+
+			constexpr const const_iterator operator--(int)
+			{
+				const_iterator tmp = *this;
+				--(*this);
+				return tmp;
+			}
+
+			constexpr const_reference operator*() const
+			{
+				return *ptr_;
+			}
+
+			constexpr bool operator==(const const_iterator& other) const
+			{
+				return ptr_ == other.ptr_;
+			}
+
+			constexpr bool operator!=(const const_iterator& other) const
+			{
+				return ptr_ != other.ptr_;
+			}
+
+			constexpr void swap(const_iterator& other)
+			{
+				ftl::swap(other.ptr_, ptr_);
+			}
+
+			friend constexpr const_iterator
+				operator+(const const_iterator& iter, int n)
+			{
+				return const_iterator(iter.ptr_ + n);
+			}
+
+			friend constexpr const_iterator
+				operator-(const const_iterator& iter, int n)
+			{
+				return const_iterator(iter.ptr_ - n);
+			}
+
+			friend constexpr const_iterator
+				operator+(const const_iterator& iter, size_t n)
+			{
+				return const_iterator(iter.ptr_ + n);
+			}
+
+			friend constexpr const_iterator
+				operator-(const const_iterator& iter, size_t n)
+			{
+				return const_iterator(iter.ptr_ - n);
+			}
+
+		protected:
+			pointer ptr_;
+		};
 
         struct iterator : public const_iterator {
             using iterator_category = random_access_iterator_tag;
@@ -571,122 +686,6 @@ namespace ftl {
             friend constexpr iterator operator-(const iterator& iter, size_t n)
             {
                 return iterator(iter.ptr_ - n);
-            }
-
-        protected:
-            pointer ptr_;
-        };
-
-        struct const_iterator {
-            using iterator_category = random_access_iterator_tag;
-            using difference_type = std::ptrdiff_t;
-            using value_type = T;
-            using reference = T&;
-            using const_reference = const T&;
-            using pointer = T*;
-            using const_pointer = const T*;
-
-            constexpr const_iterator() = default;
-
-            constexpr explicit const_iterator(pointer ptr) : ptr_(ptr) {}
-
-            constexpr explicit const_iterator(const_pointer ptr)
-                    : ptr_(const_cast<pointer>(ptr))
-            {}
-
-            constexpr const_iterator(const const_iterator& other)
-                    : ptr_(other.ptr_)
-            {}
-
-            constexpr const_iterator(const_iterator&& other) noexcept
-                    : ptr_(other.ptr_)
-            {}
-
-            constexpr const_iterator& operator=(const const_iterator& other)
-            {
-                if (this == &other) return *this;
-                const_iterator copy(other);
-                copy.swap(*this);
-                return *this;
-            }
-
-            constexpr const_iterator& operator=(const_iterator&& other) noexcept
-            {
-                if (this == &other) return *this;
-                iterator copy(std::move(other));
-                copy.swap(*this);
-                return *this;
-            }
-
-
-            constexpr const const_iterator& operator++()
-            {
-                ++ptr_;
-                return *this;
-            }
-
-            constexpr const const_iterator operator++(int)
-            {
-                const_iterator tmp = *this;
-                ++(*this);
-                return tmp;
-            }
-
-            constexpr const const_iterator& operator--()
-            {
-                --ptr_;
-                return *this;
-            }
-
-            constexpr const const_iterator operator--(int)
-            {
-                const_iterator tmp = *this;
-                --(*this);
-                return tmp;
-            }
-
-            constexpr const_reference operator*() const
-            {
-                return *ptr_;
-            }
-
-            constexpr bool operator==(const const_iterator& other) const
-            {
-                return ptr_ == other.ptr_;
-            }
-
-            constexpr bool operator!=(const const_iterator& other) const
-            {
-                return ptr_ != other.ptr_;
-            }
-
-            constexpr void swap(const_iterator& other)
-            {
-                ftl::swap(other.ptr_, ptr_);
-            }
-
-            friend constexpr const_iterator
-            operator+(const const_iterator& iter, int n)
-            {
-                return const_iterator(iter.ptr_ + n);
-            }
-
-            friend constexpr const_iterator
-            operator-(const const_iterator& iter, int n)
-            {
-                return const_iterator(iter.ptr_ - n);
-            }
-
-            friend constexpr const_iterator
-            operator+(const const_iterator& iter, size_t n)
-            {
-                return const_iterator(iter.ptr_ + n);
-            }
-
-            friend constexpr const_iterator
-            operator-(const const_iterator& iter, size_t n)
-            {
-                return const_iterator(iter.ptr_ - n);
             }
 
         protected:

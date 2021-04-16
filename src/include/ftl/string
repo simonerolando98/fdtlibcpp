@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <exception>
 #include <stdexcept>
+#include <cmath>
 
 namespace ftl {
 	template <
@@ -16,8 +17,9 @@ namespace ftl {
 	public:
 		using value_type = CharT;
 		using allocator_type = Allocator;
-		using size_type = allocator_traits::size_type;
-		using difference_type = allocator_traits::difference_type;
+		using size_type = typename std::allocator_traits<Allocator>::size_type;
+		using difference_type =
+			typename std::allocator_traits<Allocator>::difference_type;
 		using reference = CharT&;
 		using const_reference = const CharT&;
 		using pointer = CharT*;
@@ -41,7 +43,7 @@ namespace ftl {
 		{
 			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
 			std::fill_n(b_, s_, ch);
-            b_[s_] = 0;
+			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other, size_type pos,
@@ -51,9 +53,8 @@ namespace ftl {
 			s_ = other.size() - pos;
 			c_ = s_ + 1;
 			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-			
-			strcpy(b_, other.b_ + pos);
-            b_[s_] = 0;
+			std::copy(other.b_ + pos, other.b_ + other.size(), b_);
+			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other, size_type pos,
@@ -64,84 +65,82 @@ namespace ftl {
 			s_ = other.size() - pos - count;
 			c_ = s_ + 1;
 			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-			
-			strncpy(b_, other.b_ + pos, count);
-            b_[s_] = 0;
+			std::copy_n(other.b_ + pos, count, b_);
+			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const CharT* s, size_type count,
-		                        const Allocator& alloc = Allocator())
+								const Allocator& alloc = Allocator())
 		: a_(alloc)
-        {
-            s_ = strlen(s);
-            c_ = s_ + 1;
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-            strncpy(b_, s, count);
-            b_[s_] = 0;
-        }
+		{
+			s_ = ctstrlen(s);
+			c_ = s_ + 1;
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			std::copy_n(s, count, b_);
+			b_[s_] = 0;
+		}
 
-        constexpr basic_string(const CharT* s,
-                               const Allocator& alloc = Allocator())
-        : a_(alloc)
-        {
-            s_ = strlen(s);
-            c_ = s_ + 1;
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-            strcpy(b_, s);
-            b_[s_] = 0;
-        }
+		constexpr basic_string(const CharT* s,
+							   const Allocator& alloc = Allocator())
+		: a_(alloc)
+		{
+			s_ = ctstrlen(s);
+			c_ = s_ + 1;
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			std::copy(s, s + s_, b_);
+			b_[s_] = 0;
+		}
 
-        template <typename InputIt>
-        constexpr basic_string(InputIt first, InputIt last,
-            const Allocator& alloc = Allocator())
-        : a_(alloc)
-        {
-            s_ = ftl::distance(last - first);
-            c_ = s + 1;
+		template <typename InputIt>
+		constexpr basic_string(InputIt first, InputIt last,
+			const Allocator& alloc = Allocator())
+		: a_(alloc)
+		{
+			s_ = ftl::distance(last - first);
+			c_ = s_ + 1;
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			std::copy(first, last, b_);
+			b_[s_] = 0;
+		}
 
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-            std::copy(first, last, b_);
-            b_[s_] = 0;
-        }
+		constexpr basic_string(const basic_string& other,
+			const Allocator& alloc)
+		: s_(other.s_), c_(other.c_), a_(alloc)
+		{
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
+			std::copy(other.b_, other.b_ + other.size(), b_);
+			b_[s_] = 0;
+		}
 
-        constexpr basic_string(const basic_string& other,
-            const Allocator& alloc)
-        : s_(other.s_), c_(other.c_), a_(alloc)
-        {
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
-            strcpy(b_, other.b_);
-            b_[s_] = 0;
-        }
+		constexpr basic_string(const basic_string& other)
+		: s_(other.s_), c_(other.c_), a_(other.a_)
+		{
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
+			std::copy(other.b_, other.b_ + other.size(), b_);
+			b_[s_] = 0;
+		}
 
-        constexpr basic_string(const basic_string& other)
-        : s_(other.s_), c_(other.c_), a_(other.a_)
-        {
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
-            strcpy(b_, other.b_);
-            b_[s_] = 0;
-        }
-
-        constexpr basic_string(basic_string&& other, const Allocator& alloc)
-        : b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_),
+		constexpr basic_string(basic_string&& other, const Allocator& alloc)
+		: b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_),
 			c_(other.c_), a_(alloc)
-        {
-            other.b_ = nullptr;
-        }
+		{
+			other.b_ = nullptr;
+		}
 
-        constexpr basic_string(basic_string&& other)
-	    : b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_), c_(other.c_),
-            a_(Allocator())
-        {
-            other.b_ = nullptr;
-        }
+		constexpr basic_string(basic_string&& other) noexcept
+		: b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_), c_(other.c_),
+			a_(Allocator())
+		{
+			other.b_ = nullptr;
+		}
 
 		constexpr basic_string(std::initializer_list<CharT> init,
 			const Allocator& alloc = Allocator())
 		: s_(init.size()), c_(s_ + 1), a_(alloc)
 		{
-            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
-            std::copy(init.begin(), init.end(), b_);
-            b_[s_] = 0;
+			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			std::copy(init.begin(), init.end(), b_);
+			b_[s_] = 0;
 		}
 
 		~basic_string()
@@ -151,7 +150,42 @@ namespace ftl {
 
 		constexpr basic_string& operator=(const basic_string& str)
 		{
-            return str;
+			basic_string copy(str);
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr basic_string& operator=(basic_string&& str) noexcept
+		{
+			basic_string copy(std::move(str));
+			copy.swap(*this);
+			return *this;
+		}
+
+		constexpr basic_string& operator=(const CharT* s)
+		{
+			basic_string n(s);
+			n.swap(*this);
+			return *this;
+		}
+
+		constexpr basic_string& operator=(CharT ch)
+		{
+			basic_string n(ch, 1);
+			n.swap(*this);
+			return *this;
+		}
+
+		constexpr basic_string& operator=(std::initializer_list<CharT> init)
+		{
+			basic_string n(init);
+			n.swap(*this);
+			return *this;
+		}
+
+		constexpr allocator_type get_allocator() const
+		{
+			return a_;
 		}
 
 		[[nodiscard]] constexpr bool empty() const noexcept
@@ -201,21 +235,43 @@ namespace ftl {
 		}
 
 		constexpr pointer data() noexcept
-        {
-		    return b_;
-        }
+		{
+			return b_;
+		}
 
-        constexpr const_pointer data() const noexcept
-        {
-		    return b_;
-        }
+		constexpr const_pointer data() const noexcept
+		{
+			return b_;
+		}
 
-        constexpr const_pointer c_str() const noexcept
-        {
-		    return b_;
-        }
+		constexpr const_pointer c_str() const noexcept
+		{
+			return b_;
+		}
 
+		constexpr reference at(size_type pos)
+		{
+			if (pos >= size())
+				throw std::out_of_range("string index out of range");
+			return *(b_ + pos);
+		}
 
+		constexpr const_reference at(size_type pos) const
+		{
+			if (pos >= size())
+				throw std::out_of_range("string index out of range");
+			return *(b_ + pos);
+		}
+
+		constexpr reference operator[](size_type pos) noexcept
+		{
+			return *(b_ + pos);
+		}
+
+		constexpr const_reference operator[](size_type pos) const noexcept
+		{
+			return *(b_ + pos);
+		}
 
 		constexpr iterator begin() noexcept
 		{
@@ -248,34 +304,123 @@ namespace ftl {
 		}
 
 		constexpr reverse_iterator rbegin() noexcept
-        {
-		    return reverse_iterator<iterator>(b_ + _s);
-        }
+		{
+			return reverse_iterator(b_ + s_);
+		}
 
-        constexpr const_reverse_iterator rbegin() const noexcept
-        {
-		    return const_reverse_iterator(b_ + s_);
-        }
+		constexpr const_reverse_iterator rbegin() const noexcept
+		{
+			return const_reverse_iterator(b_ + s_);
+		}
 
-        constexpr const_reverse_iterator crbegin() const noexcept
-        {
-		    return const_reverse_iterator(b_ + s_);
-        }
+		constexpr const_reverse_iterator crbegin() const noexcept
+		{
+			return const_reverse_iterator(b_ + s_);
+		}
 
-        constexpr reverse_iterator rend() noexcept
-        {
-		    return reverse_iterator(b_ - 1);
-        }
+		constexpr reverse_iterator rend() noexcept
+		{
+			return reverse_iterator(b_ - 1);
+		}
 
-        constexpr const_reverse_iterator rend() const noexcept
-        {
-		    return const_reverse_iterator(b_ - 1);
-        }
+		constexpr const_reverse_iterator rend() const noexcept
+		{
+			return const_reverse_iterator(b_ - 1);
+		}
 
-        constexpr const_reverse_iterator crend() const noexcept
-        {
-		    return const_reverse_iterator(b_ - 1);
-        }
+		constexpr const_reverse_iterator crend() const noexcept
+		{
+			return const_reverse_iterator(b_ - 1);
+		}
+
+		constexpr void push_back(CharT ch)
+		{
+			++s_;
+			if (s_ >= capacity()) reserve(smart_alloc_(capacity() + 1));
+			b_[s_ - 1] = ch;
+			b_[s_] = 0;
+		}
+
+		constexpr basic_string& append(size_type count, CharT ch)
+		{
+			for (size_type i = 0; i < count; ++i) push_back(ch);
+			return *this;
+		}
+
+		constexpr basic_string& append(const basic_string& str)
+		{
+			for (auto it = str.begin(); it != str.end(); ++it) push_back(*it);
+			return *this;
+		}
+
+		constexpr basic_string& append(const basic_string& str,
+			size_type pos, size_type count = npos)
+		{
+			if (pos > str.size()) 
+				throw std::out_of_range("position out of range");
+
+			iterator start = str.begin() + pos;
+			iterator end = count >= str.size() || count == npos ? str.end() : 
+				str.begin() + pos + count;
+			for (; start != end; ++start) push_back(*start);
+
+			return *this;
+		}
+
+		constexpr basic_string& append(const CharT* s, size_type count)
+		{
+			if (s == nullptr) return *this;
+			if (count >= ctstrlen(s)){
+				for (; *s != 0; ++s)
+					push_back(*s);
+			}
+			for (size_type i = 0; i < count; ++i)
+				push_back(*(s + i));
+
+			return *this;
+		}
+
+		constexpr basic_string& append(const CharT* s)
+		{
+			if (s == nullptr) return *this;
+			for (; *s != 0; ++s) push_back(*s);
+
+			return *this;
+		}
+
+		template <typename InputIt>
+		constexpr basic_string& append(InputIt first, InputIt last)
+		{
+			for (; first != last; ++first) push_back(*first);
+			return *this;
+		}
+
+		constexpr basic_string& append(std::initializer_list<CharT> init)
+		{
+			for (auto& x : init) push_back(x);
+			return *this;
+		}
+
+		constexpr basic_string& operator+=(const basic_string& str)
+		{
+			return append(str);
+		}
+
+		constexpr basic_string& operator+=(CharT ch)
+		{
+			push_back(ch);
+			return *this;
+		}
+
+		constexpr basic_string& operator+=(const CharT* s)
+		{
+			return append(s);
+		}
+
+		constexpr basic_string& operator+=(std::initializer_list<CharT> init)
+		{
+			return append(init);
+		}
 
 		constexpr void reserve(size_type new_cap)
 		{
@@ -285,269 +430,316 @@ namespace ftl {
 			);
 			if (new_cap <= c_) return;
 
-			c_ = new_cap;
-			auto tmp = allocator_traits::allocate(a_, c_);
+			auto tmp = allocator_traits::allocate(a_, new_cap);
 			strcpy(tmp, b_);
+			if (b_ != sb_) allocator_traits::deallocate(a_, b_, c_);
+			c_ = new_cap;
 			b_ = tmp;
 			b_[s_ + 1] = 0;
-			
-			allocator_traits::deallocate(a_, tmp, c_);
 		}
 
+		constexpr void swap(basic_string& other) noexcept
+		{
+			std::swap(other.s_, s_);
+			std::swap(other.c_, c_);
+			std::swap(other.sb_, sb_);
+			std::swap(other.b_, b_);
+		}
+
+		struct const_iterator {
+			using iterator_category = random_access_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+			using value_type = CharT;
+			using reference = CharT&;
+			using const_reference = const CharT&;
+			using pointer = CharT*;
+			using const_pointer = const CharT*;
+
+			constexpr const_iterator() = default;
+
+			constexpr explicit const_iterator(pointer ptr) : ptr_(ptr) {}
+
+			constexpr explicit const_iterator(const_pointer ptr)
+					: ptr_(const_cast<pointer>(ptr))
+			{}
+
+			constexpr const_iterator(const const_iterator& other)
+					: ptr_(other.ptr_)
+			{}
+
+			constexpr const_iterator(const_iterator&& other) noexcept
+					: ptr_(other.ptr_)
+			{}
+
+			~const_iterator() = default;
+
+			constexpr const_iterator& operator=(const const_iterator& other)
+			{
+				if (this == &other) return *this;
+				const_iterator copy(other);
+				copy.swap(*this);
+				return *this;
+			}
+
+			constexpr const_iterator& operator=(const_iterator&& other) noexcept
+			{
+				if (this == &other) return *this;
+				iterator copy(std::move(other));
+				copy.swap(*this);
+				return *this;
+			}
+
+
+			constexpr const const_iterator& operator++()
+			{
+				++ptr_;
+				return *this;
+			}
+
+			constexpr const_iterator operator++(int)
+			{
+				const_iterator tmp = *this;
+				++(*this);
+				return tmp;
+			}
+
+			constexpr const const_iterator& operator--()
+			{
+				--ptr_;
+				return *this;
+			}
+
+			constexpr const_iterator operator--(int)
+			{
+				const_iterator tmp = *this;
+				--(*this);
+				return tmp;
+			}
+
+			constexpr const_reference operator*() const
+			{
+				return *ptr_;
+			}
+
+			constexpr bool operator==(const const_iterator& other) const
+			{
+				return ptr_ == other.ptr_;
+			}
+
+			constexpr bool operator!=(const const_iterator& other) const
+			{
+				return ptr_ != other.ptr_;
+			}
+
+			constexpr void swap(const_iterator& other) noexcept
+			{
+				ftl::swap(other.ptr_, ptr_);
+			}
+
+			friend constexpr const_iterator
+			operator+(const const_iterator& iter, int n)
+			{
+				return const_iterator(iter.ptr_ + n);
+			}
+
+			friend constexpr const_iterator
+			operator-(const const_iterator& iter, int n)
+			{
+				return const_iterator(iter.ptr_ - n);
+			}
+
+			friend constexpr const_iterator
+			operator+(const const_iterator& iter, size_t n)
+			{
+				return const_iterator(iter.ptr_ + n);
+			}
+
+			friend constexpr const_iterator
+			operator-(const const_iterator& iter, size_t n)
+			{
+				return const_iterator(iter.ptr_ - n);
+			}
+
+		protected:
+			pointer ptr_;
+		};
+
 		struct iterator : public const_iterator {
-            using iterator_category = random_access_iterator_tag;
-            using difference_type = std::ptrdiff_t;
-            using value_type = T;
-            using reference = T&;
-            using const_reference = const T&;
-            using pointer = T*;
-            using const_pointer = const T*;
+			using iterator_category = random_access_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+			using value_type = CharT;
+			using reference = CharT&;
+			using const_reference = const CharT&;
+			using pointer = CharT*;
+			using const_pointer = const CharT*;
 
-            constexpr iterator() = default;
+			constexpr iterator() = default;
 
-            constexpr explicit iterator(pointer ptr) : ptr_(ptr) {}
+			constexpr explicit iterator(pointer ptr) : ptr_(ptr) {}
 
-            constexpr explicit iterator(const_pointer ptr)
-                    : ptr_(const_cast<pointer>(ptr))
-            {}
+			constexpr explicit iterator(const_pointer ptr)
+					: ptr_(const_cast<pointer>(ptr))
+			{}
 
-            constexpr iterator(const iterator& other)
-                    : ptr_(other.ptr_)
-            {}
+			constexpr iterator(const iterator& other)
+					: ptr_(other.ptr_)
+			{}
 
-            constexpr iterator(iterator&& other) noexcept
-                    : ptr_(other.ptr_)
-            {}
+			constexpr iterator(iterator&& other) noexcept
+					: ptr_(other.ptr_)
+			{}
 
-            constexpr iterator& operator=(const iterator& other)
-            {
-                if (this == &other) return *this;
-                iterator copy(other);
-                copy.swap(*this);
-                return *this;
-            }
+			~iterator() = default;
 
-            constexpr iterator& operator=(iterator&& other) noexcept
-            {
-                if (this == &other) return *this;
-                iterator copy(std::move(other));
-                copy.swap(*this);
-                return *this;
-            }
+			constexpr iterator& operator=(const iterator& other)
+			{
+				if (this == &other) return *this;
+				iterator copy(other);
+				copy.swap(*this);
+				return *this;
+			}
 
-            constexpr iterator& operator++()
-            {
-                ++ptr_;
-                return *this;
-            }
+			constexpr iterator& operator=(iterator&& other) noexcept
+			{
+				if (this == &other) return *this;
+				iterator copy(std::move(other));
+				copy.swap(*this);
+				return *this;
+			}
 
-            constexpr const iterator& operator++() const
-            {
-                ++ptr_;
-                return *this;
-            }
+			constexpr iterator& operator++()
+			{
+				++ptr_;
+				return *this;
+			}
 
-            constexpr const iterator operator++(int) const
-            {
-                iterator tmp = *this;
-                ++(*this);
-                return tmp;
-            }
+			constexpr const iterator& operator++() const
+			{
+				++ptr_;
+				return *this;
+			}
 
-            constexpr iterator& operator--()
-            {
-                --ptr_;
-                return *this;
-            }
+			constexpr iterator operator++(int) const
+			{
+				iterator tmp = *this;
+				++(*this);
+				return tmp;
+			}
 
-            constexpr const iterator& operator--() const
-            {
-                --ptr_;
-                return *this;
-            }
+			constexpr iterator& operator--()
+			{
+				--ptr_;
+				return *this;
+			}
 
-            constexpr const iterator operator--(int)
-            {
-                iterator tmp = *this;
-                --(*this);
-                return tmp;
-            }
+			constexpr const iterator& operator--() const
+			{
+				--ptr_;
+				return *this;
+			}
 
-            constexpr reference operator*()
-            {
-                return *ptr_;
-            }
+			constexpr iterator operator--(int)
+			{
+				iterator tmp = *this;
+				--(*this);
+				return tmp;
+			}
 
-            constexpr const_reference operator*() const
-            {
-                return *ptr_;
-            }
+			constexpr reference operator*()
+			{
+				return *ptr_;
+			}
 
-            constexpr bool operator==(const iterator& other) const
-            {
-                return ptr_ == other.ptr_;
-            }
+			constexpr const_reference operator*() const
+			{
+				return *ptr_;
+			}
 
-            constexpr bool operator!=(const iterator& other) const
-            {
-                return ptr_ != other.ptr_;
-            }
+			constexpr bool operator==(const iterator& other) const
+			{
+				return ptr_ == other.ptr_;
+			}
 
-            constexpr void swap(iterator& other)
-            {
-                ftl::swap(other.ptr_, ptr_);
-            }
+			constexpr bool operator!=(const iterator& other) const
+			{
+				return ptr_ != other.ptr_;
+			}
 
-            friend constexpr iterator operator+(const iterator& iter, int n)
-            {
-                return iterator(iter.ptr_ + n);
-            }
+			constexpr void swap(iterator& other) noexcept
+			{
+				ftl::swap(other.ptr_, ptr_);
+			}
 
-            friend constexpr iterator operator-(const iterator& iter, int n)
-            {
-                return iterator(iter.ptr_ - n);
-            }
+			friend constexpr iterator operator+(const iterator& iter, int n)
+			{
+				return iterator(iter.ptr_ + n);
+			}
 
-            friend constexpr iterator operator+(const iterator& iter, size_t n)
-            {
-                return iterator(iter.ptr_ + n);
-            }
+			friend constexpr iterator operator-(const iterator& iter, int n)
+			{
+				return iterator(iter.ptr_ - n);
+			}
 
-            friend constexpr iterator operator-(const iterator& iter, size_t n)
-            {
-                return iterator(iter.ptr_ - n);
-            }
+			friend constexpr iterator operator+(const iterator& iter, size_t n)
+			{
+				return iterator(iter.ptr_ + n);
+			}
 
-        protected:
-            pointer ptr_;
-        };
+			friend constexpr iterator operator-(const iterator& iter, size_t n)
+			{
+				return iterator(iter.ptr_ - n);
+			}
 
-        struct const_iterator {
-            using iterator_category = random_access_iterator_tag;
-            using difference_type = std::ptrdiff_t;
-            using value_type = T;
-            using reference = T&;
-            using const_reference = const T&;
-            using pointer = T*;
-            using const_pointer = const T*;
-
-            constexpr const_iterator() = default;
-
-            constexpr explicit const_iterator(pointer ptr) : ptr_(ptr) {}
-
-            constexpr explicit const_iterator(const_pointer ptr)
-                    : ptr_(const_cast<pointer>(ptr))
-            {}
-
-            constexpr const_iterator(const const_iterator& other)
-                    : ptr_(other.ptr_)
-            {}
-
-            constexpr const_iterator(const_iterator&& other) noexcept
-                    : ptr_(other.ptr_)
-            {}
-
-            constexpr const_iterator& operator=(const const_iterator& other)
-            {
-                if (this == &other) return *this;
-                const_iterator copy(other);
-                copy.swap(*this);
-                return *this;
-            }
-
-            constexpr const_iterator& operator=(const_iterator&& other) noexcept
-            {
-                if (this == &other) return *this;
-                iterator copy(std::move(other));
-                copy.swap(*this);
-                return *this;
-            }
-
-
-            constexpr const const_iterator& operator++()
-            {
-                ++ptr_;
-                return *this;
-            }
-
-            constexpr const const_iterator operator++(int)
-            {
-                const_iterator tmp = *this;
-                ++(*this);
-                return tmp;
-            }
-
-            constexpr const const_iterator& operator--()
-            {
-                --ptr_;
-                return *this;
-            }
-
-            constexpr const const_iterator operator--(int)
-            {
-                const_iterator tmp = *this;
-                --(*this);
-                return tmp;
-            }
-
-            constexpr const_reference operator*() const
-            {
-                return *ptr_;
-            }
-
-            constexpr bool operator==(const const_iterator& other) const
-            {
-                return ptr_ == other.ptr_;
-            }
-
-            constexpr bool operator!=(const const_iterator& other) const
-            {
-                return ptr_ != other.ptr_;
-            }
-
-            constexpr void swap(const_iterator& other)
-            {
-                ftl::swap(other.ptr_, ptr_);
-            }
-
-            friend constexpr const_iterator
-            operator+(const const_iterator& iter, int n)
-            {
-                return const_iterator(iter.ptr_ + n);
-            }
-
-            friend constexpr const_iterator
-            operator-(const const_iterator& iter, int n)
-            {
-                return const_iterator(iter.ptr_ - n);
-            }
-
-            friend constexpr const_iterator
-            operator+(const const_iterator& iter, size_t n)
-            {
-                return const_iterator(iter.ptr_ + n);
-            }
-
-            friend constexpr const_iterator
-            operator-(const const_iterator& iter, size_t n)
-            {
-                return const_iterator(iter.ptr_ - n);
-            }
-
-        protected:
-            pointer ptr_;
-        };
+		protected:
+			pointer ptr_;
+		};
 
 	private:
+		constexpr size_type smart_alloc_(size_type c)
+		{
+			if constexpr (sizeof(size_type) == 8) {
+				--c;
+				c |= c >> 1;
+				c |= c >> 2;
+				c |= c >> 4;
+				c |= c >> 8;
+				c |= c >> 16;
+				c |= c >> 32;
+				++c;
+				return c;
+			}
+			else if constexpr (sizeof(size_type) == 4) {
+				--c;
+				c |= c >> 1;
+				c |= c >> 2;
+				c |= c >> 4;
+				c |= c >> 8;
+				c |= c >> 16;
+				++c;
+				return c;
+			}
+			else {
+				return std::pow(2, std::ceil(log(c) / log(2)));
+			}
+		}
+
+		constexpr static size_type ctstrlen(const CharT* s)
+		{
+			return std::char_traits<CharT>::length(s);
+		}
+
 		using allocator_traits = std::allocator_traits<Allocator>;
 		static constexpr size_t sbsize_ = 30;
-		static const CharT* empty_str_ = "\0";
-		CharT b_;
+		static constexpr CharT* empty_str_ = "\0";
+		CharT* b_;
 		CharT sb_[sbsize_];
 		size_type s_;
 		size_type c_;
 		Allocator a_;
 	};
+
+	// standard string type
+	using string = ftl::basic_string<char>;
 }
 
 #endif
