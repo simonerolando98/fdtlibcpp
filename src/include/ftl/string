@@ -1,7 +1,8 @@
 #ifndef FTL_STRING
 #define FTL_STRING
 
-#include <ftl/iterator>
+#include "iterator"
+#include "utility"
 #include <algorithm>
 #include <exception>
 #include <stdexcept>
@@ -68,7 +69,7 @@ namespace ftl {
             b_[s_] = 0;
 		}
 
-		constexpr basic_string(const CharT* s, size_type count
+		constexpr basic_string(const CharT* s, size_type count,
 		                        const Allocator& alloc = Allocator())
 		: a_(alloc)
         {
@@ -85,14 +86,72 @@ namespace ftl {
         {
             s_ = strlen(s);
             c_ = s_ + 1;
-            b_ = c_ < sbsize_ > sb_ : allocator_traits::allocate(a_, c_);
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
             strcpy(b_, s);
             b_[s_] = 0;
         }
 
+        template <typename InputIt>
+        constexpr basic_string(InputIt first, InputIt last,
+            const Allocator& alloc = Allocator())
+        : a_(alloc)
+        {
+            s_ = ftl::distance(last - first);
+            c_ = s + 1;
+
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+            std::copy(first, last, b_);
+            b_[s_] = 0;
+        }
+
+        constexpr basic_string(const basic_string& other,
+            const Allocator& alloc)
+        : s_(other.s_), c_(other.c_), a_(alloc)
+        {
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
+            strcpy(b_, other.b_);
+            b_[s_] = 0;
+        }
+
+        constexpr basic_string(const basic_string& other)
+        : s_(other.s_), c_(other.c_), a_(other.a_)
+        {
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(b_, c_);
+            strcpy(b_, other.b_);
+            b_[s_] = 0;
+        }
+
+        constexpr basic_string(basic_string&& other, const Allocator& alloc)
+        : b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_),
+			c_(other.c_), a_(alloc)
+        {
+            other.b_ = nullptr;
+        }
+
+        constexpr basic_string(basic_string&& other)
+	    : b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_), c_(other.c_),
+            a_(Allocator())
+        {
+            other.b_ = nullptr;
+        }
+
+		constexpr basic_string(std::initializer_list<CharT> init,
+			const Allocator& alloc = Allocator())
+		: s_(init.size()), c_(s_ + 1), a_(alloc)
+		{
+            b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+            std::copy(init.begin(), init.end(), b_);
+            b_[s_] = 0;
+		}
+
 		~basic_string()
 		{
 			if (c_ > sbsize_) allocator_traits::deallocate(a_, b_, c_);
+		}
+
+		constexpr basic_string& operator=(const basic_string& str)
+		{
+            return str;
 		}
 
 		[[nodiscard]] constexpr bool empty() const noexcept
@@ -111,7 +170,7 @@ namespace ftl {
 			return s_;
 		}
 
-		constexpr static size_type max_size() const noexcept
+		constexpr static size_type max_size() noexcept
 		{
 			return std::numeric_limits<std::size_t>::max() / sizeof(CharT);
 		}
