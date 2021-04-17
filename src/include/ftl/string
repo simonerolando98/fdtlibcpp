@@ -401,6 +401,59 @@ namespace ftl {
 			return *this;
 		}
 
+		constexpr basic_string& insert(size_type index, size_type count,
+			CharT ch)
+		{
+			if (index > size())
+				throw std::out_of_range("string index out of range");
+			basic_string end(begin() + index, end());
+			if (count + size() >= capacity()) reserve(count + size() + 1);
+			std::fill_n(b_ + index, count, ch);
+			append(end);
+			b_[s_] = 0;
+			return *this;
+		}
+
+		constexpr basic_string& insert(size_type index, const CharT* s)
+		{
+			if (index > size())
+				throw std::out_of_range("string index out of range");
+			basic_string end(begin() + index, end());
+			if (ctstrlen(s) + 1 + size() > capacity())
+				reserve(ctstrlen(s) + 1 + size());
+			std::copy(s, s + ctstrlen(s), b_ + index);
+			append(end);
+			b_[s_] = 0;
+			return *this;
+		}
+
+		constexpr basic_string& insert(size_type index, const CharT* s,
+			size_type count)
+		{
+			if (index > size())
+				throw std::out_of_range("string index out of range");
+			if (count > ctstrlen(s)) return insert(index, s);
+			basic_string end(begin() + index, end());
+			if (size() + count > capacity()) reserve(size() + count + 1);
+			std::copy(s, s + count, b_ + index);
+			append(end);
+			b_[s_] = 0;
+			return *this;
+		}
+
+		constexpr basic_string& insert(size_type index, const basic_string& str)
+		{
+			if (index > size())
+				throw std::out_of_range("string index out of range");
+			basic_string end(begin() + index, end());
+			if (size() + str.size() + 1 > capacity())
+				reserve(size() + str.size() + 1);
+			std::copy(str.b_, str.b_ + str.size(), b_ + index);
+			append(end);
+			b_[s_] = 0;
+			return *this;
+		}
+
 		constexpr void pop_back()
 		{
 			if (!empty()) --s_;
