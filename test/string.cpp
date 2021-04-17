@@ -27,3 +27,11 @@ TEST(string, copyother)
 	(void)str;
 	(void)newstr;
 }
+
+TEST(string, length_distance)
+{
+	string str = "Hello how are you Dennis? That";
+	str.push_back('H');
+	ASSERT_EQ(str.length(), ftl::distance(str.begin(), str.end()));
+	(void)str;
+}

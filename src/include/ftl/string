@@ -96,7 +96,7 @@ namespace ftl {
 			const Allocator& alloc = Allocator())
 		: a_(alloc)
 		{
-			s_ = ftl::distance(last - first);
+			s_ = ftl::distance(first, last);
 			c_ = s_ + 1;
 			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
 			std::copy(first, last, b_);
@@ -401,6 +401,11 @@ namespace ftl {
 			return *this;
 		}
 
+		constexpr void pop_back()
+		{
+			if (!empty()) --s_;
+		}
+
 		constexpr basic_string& operator+=(const basic_string& str)
 		{
 			return append(str);
@@ -431,11 +436,11 @@ namespace ftl {
 			if (new_cap <= c_) return;
 
 			auto tmp = allocator_traits::allocate(a_, new_cap);
-			strcpy(tmp, b_);
+			std::copy(b_, b_ + s_, tmp);
 			if (b_ != sb_) allocator_traits::deallocate(a_, b_, c_);
 			c_ = new_cap;
 			b_ = tmp;
-			b_[s_ + 1] = 0;
+			b_[s_] = 0;
 		}
 
 		constexpr void swap(basic_string& other) noexcept
@@ -575,7 +580,8 @@ namespace ftl {
 
 			constexpr iterator() = default;
 
-			constexpr explicit iterator(pointer ptr) : ptr_(ptr) {}
+			constexpr explicit iterator(pointer ptr)
+			: const_iterator(ptr) {}
 
 			constexpr explicit iterator(const_pointer ptr)
 					: ptr_(const_cast<pointer>(ptr))
@@ -688,6 +694,14 @@ namespace ftl {
 			friend constexpr iterator operator-(const iterator& iter, size_t n)
 			{
 				return iterator(iter.ptr_ - n);
+			}
+
+			friend constexpr difference_type operator-(
+				const iterator& l, 
+				const iterator& r)
+			{
+				auto x = l.ptr_ - r.ptr_;
+				return x;
 			}
 
 		protected:
