@@ -32,27 +32,31 @@ namespace ftl {
 		static const size_type npos = -1;
 
 		constexpr explicit basic_string(const Allocator& alloc) noexcept
-		: b_(const_cast<CharT*>(empty_str_)), s_(0), c_(0), a_(alloc)
+		: b_(const_cast<CharT*>(empty_str_)), s_(0), c_(sbsize_), a_(alloc)
 		{}
 
 		constexpr basic_string() noexcept : basic_string(Allocator()) {}
 
 		constexpr basic_string(size_type count,
 			CharT ch, const Allocator& alloc = Allocator())
-		: s_(count), c_(count + 1), a_(alloc)
+		: b_(sb_), s_(count), c_(sbsize_), a_(alloc)
 		{
-			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(count + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::fill_n(b_, s_, ch);
 			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other, size_type pos,
 			const Allocator& alloc = Allocator())
-		: a_(alloc)
+		: b_(sb_), s_(other.size() - pos), c_(sbsize_), a_(alloc)
 		{
-			s_ = other.size() - pos;
-			c_ = s_ + 1;
-			b_ = s_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(other.b_ + pos, other.b_ + other.size(), b_);
 			b_[s_] = 0;
 		}
@@ -60,33 +64,37 @@ namespace ftl {
 		constexpr basic_string(const basic_string& other, size_type pos,
 			size_type count,
 			const Allocator& alloc = Allocator())
-		: a_(alloc)
+		: b_(sb_), s_(other.size() - pos - count), c_(sbsize_), a_(alloc)
 		{
-			s_ = other.size() - pos - count;
-			c_ = s_ + 1;
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy_n(other.b_ + pos, count, b_);
 			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const CharT* s, size_type count,
 								const Allocator& alloc = Allocator())
-		: a_(alloc)
+		: b_(sb_), c_(sbsize_), a_(alloc)
 		{
-			s_ = ctstrlen(s);
-			c_ = s_ + 1;
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			s_ = count <= ctstrlen(s) ? ctstrlen(s) - count : ctstrlen(s);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy_n(s, count, b_);
 			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const CharT* s,
 							   const Allocator& alloc = Allocator())
-		: a_(alloc)
+		: b_(sb_), s_(ctstrlen(s)), c_(sbsize_), a_(alloc)
 		{
-			s_ = ctstrlen(s);
-			c_ = s_ + 1;
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(s, s + s_, b_);
 			b_[s_] = 0;
 		}
@@ -94,28 +102,35 @@ namespace ftl {
 		template <typename InputIt>
 		constexpr basic_string(InputIt first, InputIt last,
 			const Allocator& alloc = Allocator())
-		: a_(alloc)
+		: b_(sb_), s_(distance(first, last)), c_(sbsize_), a_(alloc)
 		{
-			s_ = ftl::distance(first, last);
-			c_ = s_ + 1;
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(first, last, b_);
 			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other,
 			const Allocator& alloc)
-		: s_(other.s_), c_(other.c_), a_(alloc)
+		: b_(sb_), s_(other.s_), c_(sbsize_), a_(alloc)
 		{
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = other.c_;
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(other.b_, other.b_ + other.size(), b_);
 			b_[s_] = 0;
 		}
 
 		constexpr basic_string(const basic_string& other)
-		: s_(other.s_), c_(other.c_), a_(other.a_)
+		: b_(sb_), s_(other.s_), c_(sbsize_), a_(other.a_)
 		{
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = other.c_;
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(other.b_, other.b_ + other.size(), b_);
 			b_[s_] = 0;
 		}
@@ -136,9 +151,12 @@ namespace ftl {
 
 		constexpr basic_string(std::initializer_list<CharT> init,
 			const Allocator& alloc = Allocator())
-		: s_(init.size()), c_(s_ + 1), a_(alloc)
+		: b_(sb_), s_(init.size()), c_(sbsize_), a_(alloc)
 		{
-			b_ = c_ < sbsize_ ? sb_ : allocator_traits::allocate(a_, c_);
+			if (s_ >= sbsize_) {
+				c_ = smart_alloc_(s_ + 1);
+				b_ = allocator_traits::allocate(a_, c_);
+			}
 			std::copy(init.begin(), init.end(), b_);
 			b_[s_] = 0;
 		}
@@ -406,11 +424,6 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
-			basic_string end(begin() + index, end());
-			if (count + size() >= capacity()) reserve(count + size() + 1);
-			std::fill_n(b_ + index, count, ch);
-			append(end);
-			b_[s_] = 0;
 			return *this;
 		}
 
@@ -418,12 +431,6 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
-			basic_string end(begin() + index, end());
-			if (ctstrlen(s) + 1 + size() > capacity())
-				reserve(ctstrlen(s) + 1 + size());
-			std::copy(s, s + ctstrlen(s), b_ + index);
-			append(end);
-			b_[s_] = 0;
 			return *this;
 		}
 
@@ -432,12 +439,6 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
-			if (count > ctstrlen(s)) return insert(index, s);
-			basic_string end(begin() + index, end());
-			if (size() + count > capacity()) reserve(size() + count + 1);
-			std::copy(s, s + count, b_ + index);
-			append(end);
-			b_[s_] = 0;
 			return *this;
 		}
 
@@ -445,12 +446,6 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
-			basic_string end(begin() + index, end());
-			if (size() + str.size() + 1 > capacity())
-				reserve(size() + str.size() + 1);
-			std::copy(str.b_, str.b_ + str.size(), b_ + index);
-			append(end);
-			b_[s_] = 0;
 			return *this;
 		}
 
@@ -622,7 +617,7 @@ namespace ftl {
 			pointer ptr_;
 		};
 
-		struct iterator : public const_iterator {
+		struct iterator : protected const_iterator {
 			using iterator_category = random_access_iterator_tag;
 			using difference_type = std::ptrdiff_t;
 			using value_type = CharT;
@@ -637,15 +632,15 @@ namespace ftl {
 			: const_iterator(ptr) {}
 
 			constexpr explicit iterator(const_pointer ptr)
-					: ptr_(const_cast<pointer>(ptr))
+			: const_iterator(const_cast<pointer>(ptr))
 			{}
 
 			constexpr iterator(const iterator& other)
-					: ptr_(other.ptr_)
+			: const_iterator(other.ptr_)
 			{}
 
 			constexpr iterator(iterator&& other) noexcept
-					: ptr_(other.ptr_)
+			: const_iterator(other.ptr_)
 			{}
 
 			~iterator() = default;
@@ -668,13 +663,13 @@ namespace ftl {
 
 			constexpr iterator& operator++()
 			{
-				++ptr_;
+				++const_iterator::ptr_;
 				return *this;
 			}
 
 			constexpr const iterator& operator++() const
 			{
-				++ptr_;
+				++const_iterator::ptr_;
 				return *this;
 			}
 
@@ -687,13 +682,13 @@ namespace ftl {
 
 			constexpr iterator& operator--()
 			{
-				--ptr_;
+				--const_iterator::ptr_;
 				return *this;
 			}
 
 			constexpr const iterator& operator--() const
 			{
-				--ptr_;
+				--const_iterator::ptr_;
 				return *this;
 			}
 
@@ -706,27 +701,27 @@ namespace ftl {
 
 			constexpr reference operator*()
 			{
-				return *ptr_;
+				return *const_iterator::ptr_;
 			}
 
 			constexpr const_reference operator*() const
 			{
-				return *ptr_;
+				return *const_iterator::ptr_;
 			}
 
 			constexpr bool operator==(const iterator& other) const
 			{
-				return ptr_ == other.ptr_;
+				return const_iterator::ptr_ == other.ptr_;
 			}
 
 			constexpr bool operator!=(const iterator& other) const
 			{
-				return ptr_ != other.ptr_;
+				return const_iterator::ptr_ != other.ptr_;
 			}
 
 			constexpr void swap(iterator& other) noexcept
 			{
-				ftl::swap(other.ptr_, ptr_);
+				ftl::swap(other.ptr_, const_iterator::ptr_);
 			}
 
 			friend constexpr iterator operator+(const iterator& iter, int n)
@@ -756,9 +751,6 @@ namespace ftl {
 				auto x = l.ptr_ - r.ptr_;
 				return x;
 			}
-
-		protected:
-			pointer ptr_;
 		};
 
 		friend constexpr bool operator==(

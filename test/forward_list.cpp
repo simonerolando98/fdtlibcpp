@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <ftl/forward_list>
 #include <array>
 #include <iostream>
@@ -30,7 +30,7 @@ TEST(forward_list, construct_copy)
 
 TEST(forward_list, construct_move)
 {
-    forward_list<int> x(std::move(forward_list<int>{1, 3, 4, 5}));
+    forward_list<int> x(forward_list<int>{1, 3, 4, 5});
     ASSERT_EQ(4, distance(x.begin(), x.end()));
     (void)x;
 }
@@ -50,7 +50,7 @@ TEST(forward_list, assignment_copy)
 
 TEST(forward_list, assignment_move)
 {
-    forward_list<int> x = std::move(forward_list<int> { 1, 2, 3, 4, 5 });
+    forward_list<int> x = forward_list<int> { 1, 2, 3, 4, 5 };
     forward_list<int> y { 1, 2, 3, 4, 5 };
 
     auto it = y.begin();

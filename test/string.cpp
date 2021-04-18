@@ -35,3 +35,10 @@ TEST(string, length_distance)
 	ASSERT_EQ(str.length(), ftl::distance(str.begin(), str.end()));
 	(void)str;
 }
+
+TEST(string, insert_iterator)
+{
+	string str = "Hello, World";
+	str.insert(6, "my ");
+	(void)str;
+}

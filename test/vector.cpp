@@ -97,7 +97,8 @@ TEST(vector, begin_end)
 TEST(vector, iter_traversal)
 {
     vector<int> x{ 1, 1, 1, 1, 1 };
-    for (const auto& y : x) ASSERT_EQ(1, y);
+    for (auto it = x.begin(); it != x.end(); ++it)
+        ASSERT_EQ(1, *it);
     (void)x;
 }
 

@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <type_traits>
-#include <ftl/iterator>
+#include "iterator"
 
 namespace ftl {
     using ptrdiff_t = long long;
@@ -184,16 +184,19 @@ namespace ftl {
 	template <typename It>
 	constexpr ptrdiff_t distance(It first, It last)
     {
-	    if constexpr (std::is_same<typename It::iterator_category,
-	            ftl::random_access_iterator_tag>::value) {
-	        auto x = last - first;
-			return x;
-	    } else {
-	        std::ptrdiff_t dist = 0;
-            for (; first != last; ++first) dist++;
-            return dist;
-        }
+		using cat = typename It::iterator_category;
+		if constexpr (std::is_same<cat, ftl::random_access_iterator_tag>::value)
+			return last - first;
+		ptrdiff_t dist = 0;
+		for (; first != last; ++first) ++dist;
+		return dist;
     }
+
+	template <typename Ptr>
+	constexpr ptrdiff_t distance(Ptr* first, Ptr* last)
+	{
+		return last - first;
+	}
 }
 
 #endif

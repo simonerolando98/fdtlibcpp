@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <initializer_list>
 #include <cstddef>
-#include <ftl/exception>
-#include <ftl/iterator>
-#include <ftl/utility>
+#include "exception"
+#include "iterator"
+#include "utility"
 
 namespace ftl {
 	/**
@@ -364,7 +364,7 @@ namespace ftl {
 			pointer ptr_;
 		};
 
-		struct iterator : public const_iterator {
+		struct iterator : protected const_iterator {
 		    using iterator_category = random_access_iterator_tag;
             using difference_type = std::ptrdiff_t;
             using value_type = T;
@@ -375,18 +375,20 @@ namespace ftl {
 
 		    constexpr iterator() = default;
 
-		    constexpr explicit iterator(pointer ptr) : ptr_(ptr) {}
+		    constexpr explicit iterator(pointer ptr)
+			: const_iterator(ptr)
+			{}
 
 		    constexpr explicit iterator(const_pointer ptr)
-		    : ptr_(const_cast<pointer>(ptr))
+		    : const_iterator(const_cast<pointer>(ptr))
             {}
 
             constexpr iterator(const iterator& other)
-            : ptr_(other.ptr_)
+            : const_iterator(other.ptr_)
             {}
 
             constexpr iterator(iterator&& other) noexcept
-            : ptr_(other.ptr_)
+            : const_iterator(other.ptr_)
             {}
 
             constexpr iterator& operator=(const iterator& other)
@@ -407,13 +409,13 @@ namespace ftl {
 
             constexpr iterator& operator++()
             {
-		        ++ptr_;
+		        ++const_iterator::ptr_;
 		        return *this;
             }
 
             constexpr const iterator& operator++() const
             {
-                ++ptr_;
+                ++const_iterator::ptr_;
                 return *this;
             }
 
@@ -426,13 +428,13 @@ namespace ftl {
 
             constexpr iterator& operator--()
             {
-		        --ptr_;
+		        --const_iterator::ptr_;
 		        return *this;
             }
 
             constexpr const iterator& operator--() const
             {
-		        --ptr_;
+		        --const_iterator::ptr_;
 		        return *this;
             }
 
@@ -445,27 +447,27 @@ namespace ftl {
 
             constexpr reference operator*()
             {
-		        return *ptr_;
+		        return *const_iterator::ptr_;
             }
 
             constexpr const_reference operator*() const
             {
-		        return *ptr_;
+		        return *const_iterator::ptr_;
             }
 
             constexpr bool operator==(const iterator& other) const
             {
-		        return ptr_ == other.ptr_;
+		        return const_iterator::ptr_ == other.ptr_;
             }
 
             constexpr bool operator!=(const iterator& other) const
             {
-		        return ptr_ != other.ptr_;
+		        return const_iterator::ptr_ != other.ptr_;
             }
 
             constexpr void swap(iterator& other)
             {
-		        ftl::swap(other.ptr_, ptr_);
+		        ftl::swap(other.ptr_, const_iterator::ptr_);
             }
 
             friend constexpr iterator operator+(const iterator& iter, int n)
@@ -487,9 +489,6 @@ namespace ftl {
             {
 		        return iterator(iter.ptr_ - n);
             }
-
-		protected:
-            pointer ptr_;
 		};
 
 	private:
