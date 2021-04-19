@@ -9,14 +9,11 @@ namespace ftl {
     */
     class matrix_out_of_range : public std::out_of_range {
     public:
-        matrix_out_of_range()
-			: std::out_of_range("matrix index out of range") {}
+        matrix_out_of_range();
 
-        explicit matrix_out_of_range(const std::string& message)
-			: std::out_of_range(message) {}
+        matrix_out_of_range(const std::string& message);
 
-        explicit matrix_out_of_range(const char* message)
-			: std::out_of_range(message) {}
+        matrix_out_of_range(const char* message);
     };
 
     /**
@@ -24,44 +21,23 @@ namespace ftl {
     */
     class matrix_non_square : public std::length_error {
     public:
-        matrix_non_square()
-			: std::length_error("matrix non square") {}
+        matrix_non_square();
 
-        explicit matrix_non_square(const std::string& message)
-			: std::length_error(message) {}
+        matrix_non_square(const std::string& message);
 
-        explicit matrix_non_square(const char* message)
-			: std::length_error(message) {}
+        matrix_non_square(const char* message);
     };
 	
-	/**
-	 * @brief Matrix size mismatch exception.
-	*/
-    class matrix_size_mismatch : public std::length_error {
-    public:
-        matrix_size_mismatch()
-			: std::length_error("matrix size mismatch") {}
-
-        explicit matrix_size_mismatch(const std::string& message)
-			: std::length_error(message) {}
-
-        explicit matrix_size_mismatch(const char* message)
-			: std::length_error(message) {}
-    };
-
 	/**
 	 * @brief Array out of range exception.
 	*/
 	class array_out_of_range : public std::out_of_range {
 	public:
-		array_out_of_range()
-			: std::out_of_range("array index out of range") {}
+		array_out_of_range();
 
-		explicit array_out_of_range(const std::string& message)
-			: std::out_of_range(message) {}
+		array_out_of_range(const std::string& message);
 
-		explicit array_out_of_range(const char* message)
-			: std::out_of_range(message) {}
+		array_out_of_range(const char* message);
 	};
 
     /**
@@ -69,14 +45,11 @@ namespace ftl {
     */
     class vector_size_mismatch : public std::length_error {
     public:
-        vector_size_mismatch()
-			: std::length_error("vector size mismatch") {}
+        vector_size_mismatch();
 
-        explicit vector_size_mismatch(const std::string& message)
-			: std::length_error(message) {}
+		vector_size_mismatch(const std::string& message);
 
-        explicit vector_size_mismatch(const char* message)
-			: std::length_error(message) {}
+        vector_size_mismatch(const char* message);
     };
 }
 

@@ -6,4 +6,4 @@ add_executable(${TEST_BIN} ${TEST_SOURCES})
 
 add_test(NAME ${TEST_BIN} COMMAND ${TEST_BIN})
 
-target_link_libraries(${TEST_BIN} PUBLIC gtest)
+target_link_libraries(${TEST_BIN} PUBLIC gtest ${CMAKE_PROJECT_NAME}_lib)

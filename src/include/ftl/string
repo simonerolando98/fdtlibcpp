@@ -415,7 +415,7 @@ namespace ftl {
 
 		constexpr basic_string& append(std::initializer_list<CharT> init)
 		{
-			for (auto& x : init) push_back(x);
+			for (const auto& x : init) push_back(x);
 			return *this;
 		}
 
@@ -424,6 +424,7 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
+
 			return *this;
 		}
 
