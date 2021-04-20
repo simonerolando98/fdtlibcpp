@@ -192,6 +192,19 @@ namespace ftl {
 		return dist;
     }
 
+	template <typename It1, typename It2>
+	constexpr ptrdiff_t distance(It1 first, It2 last)
+	{
+		using cat1 = typename It1::iterator_category;
+		using cat2 = typename It2::iterator_category;
+		if constexpr (std::is_same<cat1, ftl::random_access_iterator_tag>::value
+					  && std::is_same<cat2, ftl::random_access_iterator_tag>::value)
+			return last - first;
+		ptrdiff_t dist = 0;
+		for (; first != last; ++first) ++dist;
+		return dist;
+	}
+
 	template <typename Ptr>
 	constexpr ptrdiff_t distance(Ptr* first, Ptr* last)
 	{

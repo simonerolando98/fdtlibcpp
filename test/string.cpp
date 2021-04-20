@@ -28,6 +28,14 @@ TEST(string, copyother)
 	(void)newstr;
 }
 
+TEST(string, construct_from_temporary)
+{
+	string&& temp = string("Hello");
+	string str(std::move(temp));
+	ASSERT_EQ(temp, str);
+	(void)str;
+}
+
 TEST(string, length_distance)
 {
 	string str = "Hello how are you Dennis? That";
@@ -36,9 +44,31 @@ TEST(string, length_distance)
 	(void)str;
 }
 
-TEST(string, insert_iterator)
+TEST(string, insert_nchars)
 {
 	string str = "Hello, World";
-	str.insert(6, "my ");
+	str.insert(6, 2, 'x');
+	const string comp = "Hello,xx World";
+	ASSERT_EQ(str, comp);
 	(void)str;
+}
+
+TEST(string, insert_charptr)
+{
+	string str = "Hello, World";
+	str.insert(6, "test");
+	const string comp = "Hello,test World";
+	ASSERT_EQ(str, comp);
+	(void)str;
+}
+
+TEST(string, insert_basic_string)
+{
+	string str = "Hello, World";
+	string ins = "test";
+	str.insert(6, ins);
+	const string comp = "Hello,test World";
+	ASSERT_EQ(str, comp);
+	(void)str;
+	(void)ins;
 }

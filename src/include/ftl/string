@@ -33,7 +33,9 @@ namespace ftl {
 
 		constexpr explicit basic_string(const Allocator& alloc) noexcept
 		: b_(const_cast<CharT*>(empty_str_)), s_(0), c_(sbsize_), a_(alloc)
-		{}
+		{
+			memset(sb_, 0, sbsize_);
+		}
 
 		constexpr basic_string() noexcept : basic_string(Allocator()) {}
 
@@ -136,17 +138,23 @@ namespace ftl {
 		}
 
 		constexpr basic_string(basic_string&& other, const Allocator& alloc)
-		: b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_),
-			c_(other.c_), a_(alloc)
+		: b_(sb_), s_(other.s_), c_(other.c_),
+			a_(alloc)
 		{
-			other.b_ = nullptr;
+			if (s_ >= sbsize_) {
+				b_ = other.b_;
+				other.b_ = nullptr;
+			} else std::copy(other.begin(), other.end(), sb_);
 		}
 
 		constexpr basic_string(basic_string&& other) noexcept
-		: b_(other.b_), sb_(std::move(other.sb_)), s_(other.s_), c_(other.c_),
-			a_(Allocator())
+		: b_(sb_), s_(other.s_), c_(other.c_),
+			a_(other.a_)
 		{
-			other.b_ = nullptr;
+			if (s_ >= sbsize_) {
+				b_ = other.b_;
+				other.b_ = nullptr;
+			} else std::copy(other.begin(), other.end(), sb_);
 		}
 
 		constexpr basic_string(std::initializer_list<CharT> init,
@@ -425,6 +433,13 @@ namespace ftl {
 			if (index > size())
 				throw std::out_of_range("string index out of range");
 
+			if (s_ + count >= c_) reserve(s_ + count);
+
+			std::copy(b_ + index, b_ + s_, b_ + index + count);
+			std::fill(b_ + index, b_ + index + count, ch);
+			s_ += count;
+
+			b_[s_] = 0;
 			return *this;
 		}
 
@@ -432,6 +447,15 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
+			auto len = ctstrlen(s);
+
+			if (s_ + len >= c_) reserve(s_ + len);
+
+			std::copy(b_ + index, b_ + s_, b_ + index + len);
+			std::copy(s, s + len, b_ + index);
+			s_ += len;
+
+			b_[s_] = 0;
 			return *this;
 		}
 
@@ -440,6 +464,15 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
+			auto len = count < ctstrlen(s) ? count : ctstrlen(s);
+
+			if (s_ + len >= c_) reserve(s_ + len);
+
+			std::copy(b_ + index, b_ + s_, b_ + index + len);
+			std::copy(s, s + len, b_ + index);
+			s_ += len;
+
+			b_[s_] = 0;
 			return *this;
 		}
 
@@ -447,6 +480,14 @@ namespace ftl {
 		{
 			if (index > size())
 				throw std::out_of_range("string index out of range");
+
+			if (s_ + str.size() >= c_) reserve(s_ + str.size());
+			
+			std::copy(b_ + index, b_ + s_, b_ + index + str.size());
+			std::copy(str.begin(), str.end(), b_ + index);
+			s_ += str.size();
+
+			b_[s_] = 0;
 			return *this;
 		}
 
@@ -603,6 +644,18 @@ namespace ftl {
 			}
 
 			friend constexpr const_iterator
+			operator+(const const_iterator& iter, long n)
+			{
+				return const_iterator(iter.ptr_ + n);
+			}
+
+			friend constexpr const_iterator
+			operator-(const const_iterator& iter, long n)
+			{
+				return const_iterator(iter.ptr_ - n);
+			}
+
+			friend constexpr const_iterator
 			operator+(const const_iterator& iter, size_t n)
 			{
 				return const_iterator(iter.ptr_ + n);
@@ -614,11 +667,18 @@ namespace ftl {
 				return const_iterator(iter.ptr_ - n);
 			}
 
+			friend constexpr const_iterator
+			operator+(const const_iterator& lhs, const const_iterator& rhs)
+			{
+				auto dist = distance(lhs, rhs);
+				return const_iterator(lhs.ptr_ + dist);
+			}
+
 		protected:
 			pointer ptr_;
 		};
 
-		struct iterator : protected const_iterator {
+		struct iterator : public const_iterator {
 			using iterator_category = random_access_iterator_tag;
 			using difference_type = std::ptrdiff_t;
 			using value_type = CharT;
@@ -745,6 +805,13 @@ namespace ftl {
 				return iterator(iter.ptr_ - n);
 			}
 
+			friend constexpr iterator
+			operator+(const iterator& lhs, const iterator& rhs)
+			{
+				auto dist = distance(lhs, rhs);
+				return iterator(lhs.ptr_ + dist);
+			}
+
 			friend constexpr difference_type operator-(
 				const iterator& l, 
 				const iterator& r)
@@ -806,6 +873,29 @@ namespace ftl {
 
 	// standard string type
 	using string = ftl::basic_string<char>;
+
+	template <typename CharT>
+	constexpr bool operator==(
+		const basic_string<CharT>& lhs, const basic_string<CharT>& rhs)
+	{
+		return std::char_traits<CharT>::compare(lhs.c_str(), rhs.c_str()) == 0;
+	}
+
+	template <typename CharT>
+	constexpr bool operator==(
+		basic_string<CharT>&& lhs, const basic_string<CharT>& rhs
+	)
+	{
+		return std::char_traits<CharT>::compare(lhs.c_str(), rhs.c_str()) == 0;
+	}
+
+	template <typename CharT>
+	constexpr bool operator==(
+		const basic_string<CharT>& lhs, basic_string<CharT>&& rhs
+	)
+	{
+		return std::char_traits<CharT>::compare(lhs.c_str(), rhs.c_str()) == 0;
+	}
 }
 
 #endif
