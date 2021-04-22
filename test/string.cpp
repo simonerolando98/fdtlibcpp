@@ -72,3 +72,42 @@ TEST(string, insert_basic_string)
 	(void)str;
 	(void)ins;
 }
+
+TEST(string, insert_char_iterator)
+{
+	string str = "Hello, World";
+	str.insert(str.begin() + 6, 'x');
+	const string comp = "Hello,x World";
+	ASSERT_EQ(str, comp);
+	(void)str;
+}
+
+TEST(string, insert_char_iterator_count)
+{
+	string str = "Hello, World";
+	str.insert(str.begin() + 6, 3, 'x');
+	const string comp = "Hello,xxx World";
+	ASSERT_EQ(str, comp);
+	(void)str;
+}
+
+TEST(string, insert_iterator_sequence)
+{
+	string str = "Hello, World";
+	string np = "test";
+	const string comp = "Hello,test World";
+	str.insert(str.begin() + 6, np.begin(), np.end());
+	ASSERT_EQ(str, comp);
+	(void)str;
+	(void)np;
+}
+
+TEST(string, insert_iterator_init_list)
+{
+	string str = "Hello, World";
+	const auto init = { 't', 'e', 's', 't' };
+	str.insert(str.begin() + 6, init);
+	const string comp = "Hello,test World";
+	ASSERT_EQ(str, comp);
+	(void)str;
+}

@@ -491,6 +491,57 @@ namespace ftl {
 			return *this;
 		}
 
+		constexpr iterator insert(const_iterator pos, CharT ch)
+		{
+			auto ptr = static_cast<pointer>(pos);
+
+			if (s_ + 1 >= c_) reserve(s_ + 1);
+
+			std::copy(ptr, b_ + s_, ptr + 1);
+			*ptr = ch;
+			s_ += 1;
+
+			b_[s_] = 0;
+			return iterator(ptr);
+		}
+
+		constexpr iterator insert(const_iterator pos, size_type count, CharT ch)
+		{
+			auto ptr = static_cast<pointer>(pos);
+
+			if (s_ + count >= c_) reserve(s_ + count);
+
+			std::copy(ptr, b_ + s_, ptr + count);
+			for (auto p = ptr; p != ptr + count; ++p) *p = ch;
+
+			s_ += count;
+			b_[s_] = 0;
+
+			return iterator(ptr);
+		}
+
+		template <typename InputIt>
+		constexpr iterator insert(const_iterator pos, InputIt first, InputIt last)
+		{
+			auto dist = distance(first, last);
+			auto ptr = static_cast<pointer>(pos);
+
+			if (s_ + dist >= c_) reserve(s_ + dist);
+
+			std::copy(ptr, b_ + s_, ptr + dist);
+			std::copy(first, last, ptr);
+
+			s_ += dist;
+			b_[s_] = 0;
+			return iterator(&(*pos));
+		}
+
+		constexpr iterator
+		insert(const_iterator pos, std::initializer_list<CharT> init)
+		{
+			return insert(pos, init.begin(), init.end());
+		}
+
 		constexpr void pop_back()
 		{
 			if (!empty()) --s_;
@@ -621,7 +672,17 @@ namespace ftl {
 				return ptr_ == other.ptr_;
 			}
 
+			constexpr bool operator==(const iterator& other) const
+			{
+				return ptr_ == other.ptr_;
+			}
+
 			constexpr bool operator!=(const const_iterator& other) const
+			{
+				return ptr_ != other.ptr_;
+			}
+
+			constexpr bool operator!=(const iterator& other) const
 			{
 				return ptr_ != other.ptr_;
 			}
@@ -629,30 +690,6 @@ namespace ftl {
 			constexpr void swap(const_iterator& other) noexcept
 			{
 				ftl::swap(other.ptr_, ptr_);
-			}
-
-			friend constexpr const_iterator
-			operator+(const const_iterator& iter, int n)
-			{
-				return const_iterator(iter.ptr_ + n);
-			}
-
-			friend constexpr const_iterator
-			operator-(const const_iterator& iter, int n)
-			{
-				return const_iterator(iter.ptr_ - n);
-			}
-
-			friend constexpr const_iterator
-			operator+(const const_iterator& iter, long n)
-			{
-				return const_iterator(iter.ptr_ + n);
-			}
-
-			friend constexpr const_iterator
-			operator-(const const_iterator& iter, long n)
-			{
-				return const_iterator(iter.ptr_ - n);
 			}
 
 			friend constexpr const_iterator
@@ -672,6 +709,17 @@ namespace ftl {
 			{
 				auto dist = distance(lhs, rhs);
 				return const_iterator(lhs.ptr_ + dist);
+			}
+
+			friend constexpr ptrdiff_t
+			operator-(const const_iterator& lhs, const const_iterator& rhs)
+			{
+				return rhs.ptr_ - lhs.ptr_;
+			}
+
+			constexpr explicit operator pointer()
+			{
+				return ptr_;
 			}
 
 		protected:
@@ -775,9 +823,19 @@ namespace ftl {
 				return const_iterator::ptr_ == other.ptr_;
 			}
 
+			constexpr bool operator==(const const_iterator& other) const
+			{
+				return const_iterator::ptr_ == other.ptr_;
+			}
+
 			constexpr bool operator!=(const iterator& other) const
 			{
 				return const_iterator::ptr_ != other.ptr_;
+			}
+
+			constexpr bool operator!=(const const_iterator& other) const
+			{
+				return const_iterator::ptr_ != &(*other);
 			}
 
 			constexpr void swap(iterator& other) noexcept
@@ -818,6 +876,11 @@ namespace ftl {
 			{
 				auto x = l.ptr_ - r.ptr_;
 				return x;
+			}
+
+			constexpr explicit operator pointer() const
+			{
+				return const_iterator::ptr_;
 			}
 		};
 
